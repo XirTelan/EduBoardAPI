@@ -8,7 +8,7 @@ namespace PPTBoardAPI.Controllers
 {
     [Route("api/specialities")]
     [ApiController]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+ //   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class SpecialitiesController : ControllerBase
     {
         private readonly ApplicationDbContext context;
@@ -41,7 +41,10 @@ namespace PPTBoardAPI.Controllers
             return NoContent();
         }
         [HttpPut]
-        public ActionResult Put() {
+        public async Task<ActionResult> Put([FromBody] Speciality speciality)
+        {
+            context.Specialities.Add(speciality);
+            await context.SaveChangesAsync();
             return NoContent();
         }
     }
