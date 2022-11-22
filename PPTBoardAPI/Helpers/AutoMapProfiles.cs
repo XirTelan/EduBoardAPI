@@ -10,6 +10,13 @@ namespace PPTBoardAPI.Helpers
         {
             CreateMap<SpecialityDTO, Speciality>().ReverseMap();
             CreateMap<SpecialityCreationDTO, Speciality>();
+
+            CreateMap<StudentDTO, Student>().ReverseMap();
+            CreateMap<StudentCreationDTO, Student>();
+
+            CreateMap<GroupDTO, Group>().ReverseMap();
+            CreateMap<GroupCreationDTO, Group>();
+
         }
     }
 }

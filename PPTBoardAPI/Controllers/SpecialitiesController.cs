@@ -33,10 +33,14 @@ namespace PPTBoardAPI.Controllers
 
         }
         [HttpGet("{Id:int}")]
-        public ActionResult<Speciality> GetSpecialitiesById(int Id)
+        public async Task<ActionResult<SpecialityDTO>> GetSpecialitiesById(int Id)
         {
-            return NoContent();
-
+            var speciality = await context.Specialities.FirstOrDefaultAsync(speciality => speciality.Id == Id);
+            if (speciality == null)
+            {
+                return NotFound();
+            }
+            return mapper.Map<SpecialityDTO>(speciality);
         }
         [HttpPost]
         public async Task<ActionResult> Post([FromBody] SpecialityCreationDTO specialityCreationDTO) {
@@ -45,14 +49,24 @@ namespace PPTBoardAPI.Controllers
             await context.SaveChangesAsync();
             return NoContent();
         }
-        [HttpDelete]
-        public ActionResult Delete() {
+        [HttpDelete("{id:int}")]
+        public async Task<ActionResult> Delete(int id) {
+            var speciality = await context.Specialities.AnyAsync(speciality => speciality.Id == id);
+            if (!speciality)
+                return NotFound();
+            context.Remove(new Speciality() { Id = id });
+            await context.SaveChangesAsync();
             return NoContent();
         }
-        [HttpPut]
-        public async Task<ActionResult> Put([FromBody] Speciality speciality)
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult> Put(int id,[FromBody] SpecialityDTO specialityDTO)
         {
-            context.Specialities.Add(speciality);
+            var speciality = await context.Specialities.FirstOrDefaultAsync(speciality => speciality.Id == id);
+            if (speciality == null)
+            {
+                return NotFound();
+            }
+            speciality = mapper.Map(specialityDTO,speciality);
             await context.SaveChangesAsync();
             return NoContent();
         }
