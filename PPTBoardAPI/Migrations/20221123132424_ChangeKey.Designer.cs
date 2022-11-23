@@ -11,8 +11,8 @@ using PPTBoardAPI;
 namespace PPTBoardAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20221122072851_NewEntities")]
-    partial class NewEntities
+    [Migration("20221123132424_ChangeKey")]
+    partial class ChangeKey
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -22,6 +22,23 @@ namespace PPTBoardAPI.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
+
+            modelBuilder.Entity("PPTBoardAPI.Entities.Discipline", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Disciplines");
+                });
 
             modelBuilder.Entity("PPTBoardAPI.Entities.Group", b =>
                 {
@@ -63,6 +80,21 @@ namespace PPTBoardAPI.Migrations
                     b.ToTable("Specialities");
                 });
 
+            modelBuilder.Entity("PPTBoardAPI.Entities.SpecialityDiscipline", b =>
+                {
+                    b.Property<int>("SpecialityId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DisciplineId")
+                        .HasColumnType("int");
+
+                    b.HasKey("SpecialityId", "DisciplineId");
+
+                    b.HasIndex("DisciplineId");
+
+                    b.ToTable("SpecialityDiscipline");
+                });
+
             modelBuilder.Entity("PPTBoardAPI.Entities.Student", b =>
                 {
                     b.Property<int>("Id")
@@ -71,7 +103,7 @@ namespace PPTBoardAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<string>("FistName")
+                    b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -88,7 +120,49 @@ namespace PPTBoardAPI.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("GroupId");
+
                     b.ToTable("Students");
+                });
+
+            modelBuilder.Entity("PPTBoardAPI.Entities.SpecialityDiscipline", b =>
+                {
+                    b.HasOne("PPTBoardAPI.Entities.Discipline", "Discipline")
+                        .WithMany()
+                        .HasForeignKey("DisciplineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PPTBoardAPI.Entities.Speciality", "Speciality")
+                        .WithMany("SpecialityDiscipline")
+                        .HasForeignKey("SpecialityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Discipline");
+
+                    b.Navigation("Speciality");
+                });
+
+            modelBuilder.Entity("PPTBoardAPI.Entities.Student", b =>
+                {
+                    b.HasOne("PPTBoardAPI.Entities.Group", "Group")
+                        .WithMany("Students")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Group");
+                });
+
+            modelBuilder.Entity("PPTBoardAPI.Entities.Group", b =>
+                {
+                    b.Navigation("Students");
+                });
+
+            modelBuilder.Entity("PPTBoardAPI.Entities.Speciality", b =>
+                {
+                    b.Navigation("SpecialityDiscipline");
                 });
 #pragma warning restore 612, 618
         }

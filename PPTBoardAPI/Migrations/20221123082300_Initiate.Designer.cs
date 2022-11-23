@@ -11,8 +11,8 @@ using PPTBoardAPI;
 namespace PPTBoardAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20221122132111_UpdateDbKeys")]
-    partial class UpdateDbKeys
+    [Migration("20221123082300_Initiate")]
+    partial class Initiate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -23,13 +23,29 @@ namespace PPTBoardAPI.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
 
-            modelBuilder.Entity("PPTBoardAPI.Entities.Group", b =>
+            modelBuilder.Entity("PPTBoardAPI.Entities.Discipline", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("DisciplineId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DisciplineId"), 1L, 1);
+
+                    b.Property<int>("Name")
+                        .HasColumnType("int");
+
+                    b.HasKey("DisciplineId");
+
+                    b.ToTable("Discipline");
+                });
+
+            modelBuilder.Entity("PPTBoardAPI.Entities.Group", b =>
+                {
+                    b.Property<int>("GroupId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("GroupId"), 1L, 1);
 
                     b.Property<int>("CuratorId")
                         .HasColumnType("int");
@@ -41,26 +57,41 @@ namespace PPTBoardAPI.Migrations
                     b.Property<int>("SpecialityId")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.HasKey("GroupId");
 
                     b.ToTable("Groups");
                 });
 
             modelBuilder.Entity("PPTBoardAPI.Entities.Speciality", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("SpecialityId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SpecialityId"), 1L, 1);
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.HasKey("SpecialityId");
 
                     b.ToTable("Specialities");
+                });
+
+            modelBuilder.Entity("PPTBoardAPI.Entities.SpecialityDiscipline", b =>
+                {
+                    b.Property<int>("SpecialityId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DisciplineId")
+                        .HasColumnType("int");
+
+                    b.HasKey("SpecialityId", "DisciplineId");
+
+                    b.HasIndex("DisciplineId");
+
+                    b.ToTable("SpecialityDiscipline");
                 });
 
             modelBuilder.Entity("PPTBoardAPI.Entities.Student", b =>
@@ -93,6 +124,25 @@ namespace PPTBoardAPI.Migrations
                     b.ToTable("Students");
                 });
 
+            modelBuilder.Entity("PPTBoardAPI.Entities.SpecialityDiscipline", b =>
+                {
+                    b.HasOne("PPTBoardAPI.Entities.Discipline", "Discipline")
+                        .WithMany()
+                        .HasForeignKey("DisciplineId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PPTBoardAPI.Entities.Speciality", "Speciality")
+                        .WithMany("SpecialityDiscipline")
+                        .HasForeignKey("SpecialityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Discipline");
+
+                    b.Navigation("Speciality");
+                });
+
             modelBuilder.Entity("PPTBoardAPI.Entities.Student", b =>
                 {
                     b.HasOne("PPTBoardAPI.Entities.Group", "Group")
@@ -107,6 +157,11 @@ namespace PPTBoardAPI.Migrations
             modelBuilder.Entity("PPTBoardAPI.Entities.Group", b =>
                 {
                     b.Navigation("Students");
+                });
+
+            modelBuilder.Entity("PPTBoardAPI.Entities.Speciality", b =>
+                {
+                    b.Navigation("SpecialityDiscipline");
                 });
 #pragma warning restore 612, 618
         }

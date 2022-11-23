@@ -10,6 +10,13 @@ namespace PPTBoardAPI
         {
         }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+
+            modelBuilder.Entity<SpecialityDiscipline>().HasKey(x => new { x.SpecialityId, x.DisciplineId });
+            base.OnModelCreating(modelBuilder);
+        }
+        public DbSet<Discipline> Disciplines { get; set; }
         public DbSet<Group> Groups { get; set; }
         public DbSet<Speciality> Specialities { get; set; }
         public DbSet<Student> Students { get; set; }
