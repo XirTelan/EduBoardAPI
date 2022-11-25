@@ -24,7 +24,7 @@ namespace PPTBoardAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<List<StudentDTO>>> Get([FromQuery] PaginationDTO paginationDTO)
         {
-            var queryable = context.Students.AsQueryable();
+            var queryable = context.Students.Include(x=>x.Group).AsQueryable();
             await HttpContext.InsertParametersPaginationInHeader(queryable);
             var students = await queryable.OrderBy(x => x.SecondName).Paginate(paginationDTO).ToListAsync();
             return mapper.Map<List<StudentDTO>>(students);

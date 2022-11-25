@@ -11,8 +11,8 @@ using PPTBoardAPI;
 namespace PPTBoardAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20221123132424_ChangeKey")]
-    partial class ChangeKey
+    [Migration("20221125135429_UpdateStudent2")]
+    partial class UpdateStudent2
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -58,7 +58,13 @@ namespace PPTBoardAPI.Migrations
                     b.Property<int>("SpecialityId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Year")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("SpecialityId");
 
                     b.ToTable("Groups");
                 });
@@ -125,6 +131,17 @@ namespace PPTBoardAPI.Migrations
                     b.ToTable("Students");
                 });
 
+            modelBuilder.Entity("PPTBoardAPI.Entities.Group", b =>
+                {
+                    b.HasOne("PPTBoardAPI.Entities.Speciality", "Speciality")
+                        .WithMany("Groups")
+                        .HasForeignKey("SpecialityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Speciality");
+                });
+
             modelBuilder.Entity("PPTBoardAPI.Entities.SpecialityDiscipline", b =>
                 {
                     b.HasOne("PPTBoardAPI.Entities.Discipline", "Discipline")
@@ -162,6 +179,8 @@ namespace PPTBoardAPI.Migrations
 
             modelBuilder.Entity("PPTBoardAPI.Entities.Speciality", b =>
                 {
+                    b.Navigation("Groups");
+
                     b.Navigation("SpecialityDiscipline");
                 });
 #pragma warning restore 612, 618

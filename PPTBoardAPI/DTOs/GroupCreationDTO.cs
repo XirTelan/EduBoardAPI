@@ -8,8 +8,8 @@ namespace PPTBoardAPI.DTOs
         [Required]
         public string Name { get; set; }
         public int SpecialityId { get; set; }
+        public string Year { get; set; }
         public int CuratorId { get; set; }
-
-        public List<Student> Students { get; set; } = new List<Student>();
+        public List<int> StudentsId { get; set; } = new List<int>();
     }
 }

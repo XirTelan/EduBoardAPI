@@ -29,6 +29,13 @@ namespace PPTBoardAPI.Controllers
             return mapper.Map<List<DisciplineDTO>>(disciplines);
 
         }
+        [HttpGet("getall")]
+        public async Task<ActionResult<List<DisciplineDTO>>> GetAll()
+        {
+            var disciplines = await context.Disciplines.AsQueryable().OrderBy(x => x.Name).ToListAsync();
+            return mapper.Map<List<DisciplineDTO>>(disciplines);
+
+        }
         [HttpGet("{id:int}")]
         public async Task<ActionResult<DisciplineDTO>> GetById(int id)
         {
