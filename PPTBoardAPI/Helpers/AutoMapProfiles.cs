@@ -14,8 +14,8 @@ namespace PPTBoardAPI.Helpers
                 .ForMember(x => x.Disciplines, options => options.MapFrom(MapSpecialitiesDisciplines));
 
             CreateMap<StudentDTO, Student>().ReverseMap();
-            CreateMap<StudentCreationDTO, Student>()
-                .ForMember(x=>x.Group, options=> options.MapFrom(mapStudentGroup));
+            CreateMap<StudentViewDTO, Student>().ReverseMap();
+            CreateMap<StudentCreationDTO, Student>();
 
             CreateMap<GroupDTO, Group>().ReverseMap();
             CreateMap<GroupCreationDTO, Group>();
@@ -24,7 +24,7 @@ namespace PPTBoardAPI.Helpers
             CreateMap<DisciplineCreationDTO, Discipline>();
 
         }
-
+    
         private List<DisciplineDTO> MapSpecialitiesDisciplines(Speciality speciality, SpecialityDTO specialityDTO)
         {
             var resultDiscplines = new List<DisciplineDTO>();
@@ -39,11 +39,6 @@ namespace PPTBoardAPI.Helpers
             return resultDiscplines;
         }
 
-
-        private Group mapStudentGroup(StudentCreationDTO studentCreationDTO, Student student)
-        {
-            return new Group() { Id = studentCreationDTO.GroupId };
-        }
 
         private List<SpecialityDiscipline> MapCreationDtoSpecialityDiscipline(SpecialityCreationDTO specialityCreationDTO, Speciality speciality)
         {

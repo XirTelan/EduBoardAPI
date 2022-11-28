@@ -14,6 +14,6 @@ namespace PPTBoardAPI.DTOs
 
         public SpecialityDTO Speciality { get; set; }
 
-        public List<StudentDTO> Students { get; set; } = new List<StudentDTO>();
+        public List<StudentViewDTO> Students { get; set; }
     }
 }

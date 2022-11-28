@@ -24,11 +24,19 @@ namespace PPTBoardAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<List<StudentDTO>>> Get([FromQuery] PaginationDTO paginationDTO)
         {
-            var queryable = context.Students.Include(x=>x.Group).AsQueryable();
+            var queryable = context.Students.Include(s=>s.Group).AsQueryable();
             await HttpContext.InsertParametersPaginationInHeader(queryable);
             var students = await queryable.OrderBy(x => x.SecondName).Paginate(paginationDTO).ToListAsync();
             return mapper.Map<List<StudentDTO>>(students);
 
+        }
+        [HttpGet("getall")]
+        public async Task<ActionResult<List<StudentDTO>>> Get()
+        {
+           var queryable = context.Students.Include(s => s.Group).AsQueryable();
+           var students = await queryable.OrderBy(x => x.SecondName).ToListAsync();
+           return mapper.Map<List<StudentDTO>>(students);
+   
         }
         [HttpGet("{id:int}")]
         public async Task<ActionResult<StudentDTO>> GetById(int id)

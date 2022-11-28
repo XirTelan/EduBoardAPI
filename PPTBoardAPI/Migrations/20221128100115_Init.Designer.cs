@@ -12,8 +12,8 @@ using PPTBoardAPI;
 namespace PPTBoardAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20221125134714_UpdateStudent")]
-    partial class UpdateStudent
+    [Migration("20221128100115_Init")]
+    partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -56,7 +56,8 @@ namespace PPTBoardAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("SpecialityId")
+                    b.Property<int?>("SpecialityId")
+                        .IsRequired()
                         .HasColumnType("int");
 
                     b.Property<string>("Year")
@@ -164,9 +165,12 @@ namespace PPTBoardAPI.Migrations
 
             modelBuilder.Entity("PPTBoardAPI.Entities.Student", b =>
                 {
-                    b.HasOne("PPTBoardAPI.Entities.Group", null)
+                    b.HasOne("PPTBoardAPI.Entities.Group", "Group")
                         .WithMany("Students")
-                        .HasForeignKey("GroupId");
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Group");
                 });
 
             modelBuilder.Entity("PPTBoardAPI.Entities.Group", b =>

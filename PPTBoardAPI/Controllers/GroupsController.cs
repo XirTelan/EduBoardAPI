@@ -23,7 +23,7 @@ namespace PPTBoardAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<List<GroupDTO>>> Get([FromQuery] PaginationDTO paginationDTO)
         {
-            var queryable = context.Groups.Include(x=>x.Speciality).AsQueryable();
+            var queryable = context.Groups.Include(g => g.Students).Include(x=>x.Speciality).AsQueryable();
             await HttpContext.InsertParametersPaginationInHeader(queryable);
             var groups = await queryable.OrderBy(x => x.Name).Paginate(paginationDTO).ToListAsync();
             return mapper.Map<List<GroupDTO>>(groups);
@@ -33,7 +33,7 @@ namespace PPTBoardAPI.Controllers
 
         public async Task<ActionResult<List<GroupDTO>>> GetAll()
         {
-            var groups = await context.Groups.Include(x => x.Speciality).AsQueryable().ToListAsync();
+            var groups = await context.Groups.Include(g=>g.Students).Include(g => g.Speciality).AsQueryable().ToListAsync();
             return mapper.Map<List<GroupDTO>>(groups);
 
         }

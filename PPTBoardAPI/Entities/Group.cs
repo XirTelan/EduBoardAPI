@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace PPTBoardAPI.Entities
 {
@@ -10,9 +11,10 @@ namespace PPTBoardAPI.Entities
         public string Year { get; set; }
         public int CuratorId { get; set; }
 
-        public int SpecialityId { get; set; }
+        public int? SpecialityId { get; set; }
         public Speciality Speciality { get; set; }
+        [JsonIgnore]
+        public List<Student> Students { get; set; }
 
-        public List<Student> Students { get; set; } = new List<Student>();
     }
 }
