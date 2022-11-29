@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using PPTBoardAPI.DTOs;
 using PPTBoardAPI.Entities;
 
@@ -22,6 +23,8 @@ namespace PPTBoardAPI.Helpers
 
             CreateMap<DisciplineDTO, Discipline>().ReverseMap();
             CreateMap<DisciplineCreationDTO, Discipline>();
+
+            CreateMap<IdentityUser, UserDTO>();
 
         }
     
