@@ -18,13 +18,13 @@ namespace PPTBoardAPI.Controllers
 
     public class AccountsController : ControllerBase
     {
-        private readonly UserManager<IdentityUser> userManager;
-        private readonly SignInManager<IdentityUser> signInManager;
+        private readonly UserManager<Person> userManager;
+        private readonly SignInManager<Person> signInManager;
         private readonly IConfiguration configuration;
         private readonly ApplicationDbContext context;
         private readonly IMapper mapper;
 
-        public AccountsController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration configuration, ApplicationDbContext context , IMapper mapper)
+        public AccountsController(UserManager<Person> userManager, SignInManager<Person> signInManager, IConfiguration configuration, ApplicationDbContext context, IMapper mapper)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
@@ -34,31 +34,66 @@ namespace PPTBoardAPI.Controllers
         }
 
         [HttpGet("users")]
-        [Authorize(AuthenticationSchemes =JwtBearerDefaults.AuthenticationScheme, Policy ="IsAdmin")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<ActionResult<List<UserDTO>>> GetUserList([FromQuery] PaginationDTO paginationDTO)
         {
-            var queryable = context.Users.AsQueryable();
+            IQueryable<Person> queryable = context.Users.AsQueryable();
             await HttpContext.InsertParametersPaginationInHeader(queryable);
-            var users = await queryable.OrderBy(x => x.UserName).Paginate(paginationDTO).ToListAsync();
-            return mapper.Map<List<UserDTO>>(users);
+            List<Person> users = await queryable.OrderBy(u => u.UserName).Paginate(paginationDTO).ToListAsync();
+            List<UserDTO> userDTOs = new List<UserDTO>();
+            foreach (Person user in users)
+            {
+                string role = "";
+                var claims = await userManager.GetClaimsAsync(user);
+                Claim? claim = claims.FirstOrDefault(c => c.Type == "type");
+                if (claim != null)
+                    role = claim.Value;
+
+                userDTOs.Add(new UserDTO { Id = user.Id, UserName = user.UserName, Fio = user.Fio, Role = role });
+            }
+
+            return userDTOs;
         }
         [HttpPost("role")]
-        public async Task<ActionResult> MakeAdmin([FromBody] string userId)
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
+
+        public async Task<ActionResult> ChangeRole([FromBody] UserRoleDTO userRoleDTO)
         {
-          var user = await userManager.FindByIdAsync(userId);
-            await userManager.AddClaimAsync(user, new Claim("role", "admin"));
+            var user = await userManager.FindByIdAsync(userRoleDTO.UserId);
+            var claims = await userManager.GetClaimsAsync(user);
+            var claim = claims.First(c => c.Type == "type");
+            if (claim != null)
+            {
+                if (claim.Value == userRoleDTO.Role)
+                    return NoContent();
+                await userManager.RemoveClaimAsync(user, claim);
+            }
+            await userManager.AddClaimAsync(user, new Claim("type", userRoleDTO.Role));
             return NoContent();
         }
 
         [HttpPost("create")]
-        public async Task<ActionResult<AuthenticationResponse>> Create([FromBody] UserCredentials userCredentials)
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
+
+        public async Task<ActionResult> Create([FromBody] UserRegisterCredentials userRegisterCredentials)
         {
-            var user = new IdentityUser { UserName = userCredentials.UserName };
-            var result = await userManager.CreateAsync(user, userCredentials.Password);
+            var user = new Person() { UserName = userRegisterCredentials.UserName, Fio = userRegisterCredentials.Fio };
+            var result = await userManager.CreateAsync(user, userRegisterCredentials.Password);
+            return result.Succeeded ? NoContent() : BadRequest(result.Errors);
+        }
+        [HttpDelete("{id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
+
+        public async Task<ActionResult<AuthenticationResponse>> Delete(string id)
+        {
+            var user = await userManager.FindByIdAsync(id);
+            if (user == null)
+                return NotFound();
+            var result = await userManager.DeleteAsync(user);
             if (result.Succeeded)
             {
-                return await BuildToken(userCredentials);
-            } 
+                return Ok();
+            }
             else
             {
                 return BadRequest(result.Errors);
@@ -72,7 +107,7 @@ namespace PPTBoardAPI.Controllers
             var result = await signInManager.PasswordSignInAsync(userCredentials.UserName, userCredentials.Password, isPersistent: false, lockoutOnFailure: false);
             if (result.Succeeded)
             {
-                return await BuildToken(userCredentials);
+                return await BuildToken(userCredentials.UserName);
             }
             else
             {
@@ -80,13 +115,13 @@ namespace PPTBoardAPI.Controllers
             }
         }
 
-        private  async Task<AuthenticationResponse> BuildToken(UserCredentials userCredentials)
+        private async Task<AuthenticationResponse> BuildToken(string userName)
         {
             var claims = new List<Claim>()
             {
-                new Claim("name",userCredentials.UserName)
+                new Claim("name",userName)
             };
-            var user = await userManager.FindByNameAsync(userCredentials.UserName);
+            var user = await userManager.FindByNameAsync(userName);
             var claimDB = await userManager.GetClaimsAsync(user);
 
             claims.AddRange(claimDB);
@@ -95,13 +130,13 @@ namespace PPTBoardAPI.Controllers
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var expiration = DateTime.UtcNow.AddDays(1);
-            var token = new JwtSecurityToken(issuer:null, audience: null, claims: claims,expires: expiration, signingCredentials: creds);
+            var token = new JwtSecurityToken(issuer: null, audience: null, claims: claims, expires: expiration, signingCredentials: creds);
             return new AuthenticationResponse()
             {
                 Token = new JwtSecurityTokenHandler().WriteToken(token),
                 Expiration = expiration
             };
         }
-       
+
     }
 }

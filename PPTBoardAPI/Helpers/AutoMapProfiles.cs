@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Identity;
 using PPTBoardAPI.DTOs;
 using PPTBoardAPI.Entities;
 
@@ -7,10 +6,12 @@ namespace PPTBoardAPI.Helpers
 {
     public class AutoMapProfiles : Profile
     {
+
         public AutoMapProfiles()
         {
+
             CreateMap<SpecialityCreationDTO, Speciality>()
-                .ForMember(x=>x.SpecialityDiscipline, options=>options.MapFrom(MapCreationDtoSpecialityDiscipline));
+                .ForMember(x => x.SpecialityDiscipline, options => options.MapFrom(MapCreationDtoSpecialityDiscipline));
             CreateMap<Speciality, SpecialityDTO>()
                 .ForMember(x => x.Disciplines, options => options.MapFrom(MapSpecialitiesDisciplines));
 
@@ -24,10 +25,10 @@ namespace PPTBoardAPI.Helpers
             CreateMap<DisciplineDTO, Discipline>().ReverseMap();
             CreateMap<DisciplineCreationDTO, Discipline>();
 
-            CreateMap<IdentityUser, UserDTO>();
+            CreateMap<Person, UserDTO>();
 
         }
-    
+
         private List<DisciplineDTO> MapSpecialitiesDisciplines(Speciality speciality, SpecialityDTO specialityDTO)
         {
             var resultDiscplines = new List<DisciplineDTO>();

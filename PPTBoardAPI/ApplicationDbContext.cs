@@ -1,13 +1,14 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using PPTBoardAPI.DTOs;
 using PPTBoardAPI.Entities;
 using System.Diagnostics.CodeAnalysis;
 
 namespace PPTBoardAPI
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public class ApplicationDbContext : IdentityDbContext<Person>
     {
-        public ApplicationDbContext([NotNullAttribute]DbContextOptions options) : base(options)
+        public ApplicationDbContext([NotNullAttribute] DbContextOptions options) : base(options)
         {
         }
 
@@ -16,7 +17,7 @@ namespace PPTBoardAPI
 
             modelBuilder.Entity<SpecialityDiscipline>().HasKey(x => new { x.SpecialityId, x.DisciplineId });
             modelBuilder.Entity<Group>().HasOne(g => g.Speciality).WithMany(s => s.Groups).HasForeignKey(g => g.SpecialityId);
-            modelBuilder.Entity<Group>().HasMany(g=>g.Students).WithOne(s=>s.Group).HasForeignKey(s=>s.GroupId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Group>().HasMany(g => g.Students).WithOne(s => s.Group).HasForeignKey(s => s.GroupId).OnDelete(DeleteBehavior.Cascade);
             base.OnModelCreating(modelBuilder);
         }
         public DbSet<Discipline> Disciplines { get; set; }
