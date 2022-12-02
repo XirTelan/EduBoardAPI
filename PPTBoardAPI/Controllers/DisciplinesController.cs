@@ -9,7 +9,7 @@ namespace PPTBoardAPI.Controllers
 {
     [ApiController]
     [Route("api/disciplines")]
-    public class DisciplinesController: ControllerBase
+    public class DisciplinesController : ControllerBase
     {
         private readonly ApplicationDbContext context;
         private readonly IMapper mapper;
@@ -33,6 +33,15 @@ namespace PPTBoardAPI.Controllers
         public async Task<ActionResult<List<DisciplineDTO>>> GetAll()
         {
             var disciplines = await context.Disciplines.AsQueryable().OrderBy(x => x.Name).ToListAsync();
+            return mapper.Map<List<DisciplineDTO>>(disciplines);
+
+        }
+        [HttpGet("filter")]
+        public async Task<ActionResult<List<DisciplineDTO>>> FilterByName([FromQuery] PaginationDTO paginationDTO, [FromQuery] string query)
+        {
+            var queryable = context.Disciplines.Where(d => d.Name.Contains(query)).AsQueryable();
+            await HttpContext.InsertParametersPaginationInHeader(queryable);
+            var disciplines = await queryable.OrderBy(x => x.Name).Paginate(paginationDTO).ToListAsync();
             return mapper.Map<List<DisciplineDTO>>(disciplines);
 
         }

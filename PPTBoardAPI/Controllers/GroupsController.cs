@@ -9,7 +9,7 @@ namespace PPTBoardAPI.Controllers
 {
     [ApiController]
     [Route("api/groups")]
-    public class GroupsController: ControllerBase
+    public class GroupsController : ControllerBase
     {
         private readonly ApplicationDbContext context;
         private readonly IMapper mapper;
@@ -23,7 +23,16 @@ namespace PPTBoardAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<List<GroupDTO>>> Get([FromQuery] PaginationDTO paginationDTO)
         {
-            var queryable = context.Groups.Include(g => g.Students).Include(x=>x.Speciality).AsQueryable();
+            var queryable = context.Groups.Include(g => g.Students).Include(x => x.Speciality).AsQueryable();
+            await HttpContext.InsertParametersPaginationInHeader(queryable);
+            var groups = await queryable.OrderBy(x => x.Name).Paginate(paginationDTO).ToListAsync();
+            return mapper.Map<List<GroupDTO>>(groups);
+
+        }
+        [HttpGet("filter")]
+        public async Task<ActionResult<List<GroupDTO>>> FilterByName([FromQuery] PaginationDTO paginationDTO, [FromQuery] string query)
+        {
+            var queryable = context.Groups.Where(g => g.Name.Contains(query)).Include(g => g.Students).Include(x => x.Speciality).AsQueryable();
             await HttpContext.InsertParametersPaginationInHeader(queryable);
             var groups = await queryable.OrderBy(x => x.Name).Paginate(paginationDTO).ToListAsync();
             return mapper.Map<List<GroupDTO>>(groups);
@@ -33,14 +42,14 @@ namespace PPTBoardAPI.Controllers
 
         public async Task<ActionResult<List<GroupDTO>>> GetAll()
         {
-            var groups = await context.Groups.Include(g=>g.Students).Include(g => g.Speciality).AsQueryable().ToListAsync();
+            var groups = await context.Groups.Include(g => g.Students).Include(g => g.Speciality).AsQueryable().ToListAsync();
             return mapper.Map<List<GroupDTO>>(groups);
 
         }
         [HttpGet("{id:int}")]
         public async Task<ActionResult<GroupDTO>> GetById(int id)
         {
-            Group? group = await context.Groups.Include(x=>x.Speciality).FirstOrDefaultAsync(x => x.Id == id);
+            Group? group = await context.Groups.Include(x => x.Speciality).FirstOrDefaultAsync(x => x.Id == id);
             if (group == null)
                 return NotFound();
             else return mapper.Map<GroupDTO>(group);

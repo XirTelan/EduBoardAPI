@@ -12,8 +12,8 @@ namespace PPTBoardAPI.Controllers
 {
     [Route("api/students")]
     [ApiController]
-    [Authorize(AuthenticationSchemes =JwtBearerDefaults.AuthenticationScheme)]
-    public class StudentsController: ControllerBase
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public class StudentsController : ControllerBase
     {
         private readonly ApplicationDbContext context;
         private readonly IMapper mapper;
@@ -27,7 +27,7 @@ namespace PPTBoardAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<List<StudentDTO>>> Get([FromQuery] PaginationDTO paginationDTO)
         {
-            var queryable = context.Students.Include(s=>s.Group).AsQueryable();
+            var queryable = context.Students.Include(s => s.Group).AsQueryable();
             await HttpContext.InsertParametersPaginationInHeader(queryable);
             var students = await queryable.OrderBy(x => x.SecondName).Paginate(paginationDTO).ToListAsync();
             return mapper.Map<List<StudentDTO>>(students);
@@ -36,10 +36,19 @@ namespace PPTBoardAPI.Controllers
         [HttpGet("getall")]
         public async Task<ActionResult<List<StudentDTO>>> Get()
         {
-           var queryable = context.Students.Include(s => s.Group).AsQueryable();
-           var students = await queryable.OrderBy(x => x.SecondName).ToListAsync();
-           return mapper.Map<List<StudentDTO>>(students);
-   
+            var queryable = context.Students.Include(s => s.Group).AsQueryable();
+            var students = await queryable.OrderBy(x => x.SecondName).ToListAsync();
+            return mapper.Map<List<StudentDTO>>(students);
+
+        }
+        [HttpGet("filter")]
+        public async Task<ActionResult<List<StudentDTO>>> FilterByName([FromQuery] PaginationDTO paginationDTO, [FromQuery] string query)
+        {
+            var queryable = context.Students.Where(s => s.SecondName.Contains(query)).Include(s => s.Group).AsQueryable();
+            await HttpContext.InsertParametersPaginationInHeader(queryable);
+            var students = await queryable.OrderBy(x => x.SecondName).Paginate(paginationDTO).ToListAsync();
+            return mapper.Map<List<StudentDTO>>(students);
+
         }
         [HttpGet("{id:int}")]
         public async Task<ActionResult<StudentDTO>> GetById(int id)
@@ -59,12 +68,12 @@ namespace PPTBoardAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put(int id,[FromBody] StudentCreationDTO studentDTO)
+        public async Task<ActionResult> Put(int id, [FromBody] StudentCreationDTO studentDTO)
         {
             var student = await context.Students.FirstOrDefaultAsync(x => x.Id == id);
             if (student == null)
                 return NotFound();
-            student = mapper.Map(studentDTO,student);
+            student = mapper.Map(studentDTO, student);
             await context.SaveChangesAsync();
             return NoContent();
         }
