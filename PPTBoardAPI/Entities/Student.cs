@@ -11,7 +11,8 @@ namespace PPTBoardAPI.Entities
         public string MiddleName { get; set; }
         public int? GroupId { get; set; }
 
-        public Group? Group {get; set; }
+        public Group? Group { get; set; }
+        public List<Attendance> Attendances { get; set; }
 
     }
 }

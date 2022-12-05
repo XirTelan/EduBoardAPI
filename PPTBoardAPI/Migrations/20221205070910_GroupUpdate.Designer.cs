@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPTBoardAPI;
 
@@ -11,9 +12,10 @@ using PPTBoardAPI;
 namespace PPTBoardAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221205070910_GroupUpdate")]
+    partial class GroupUpdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -224,36 +226,6 @@ namespace PPTBoardAPI.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("PPTBoardAPI.Entities.Attendance", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<int>("Day")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Month")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StudentId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Value")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StudentId");
-
-                    b.ToTable("Attendances");
-                });
-
             modelBuilder.Entity("PPTBoardAPI.Entities.Discipline", b =>
                 {
                     b.Property<int>("Id")
@@ -415,17 +387,6 @@ namespace PPTBoardAPI.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("PPTBoardAPI.Entities.Attendance", b =>
-                {
-                    b.HasOne("PPTBoardAPI.Entities.Student", "Student")
-                        .WithMany("Attendances")
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Student");
-                });
-
             modelBuilder.Entity("PPTBoardAPI.Entities.Group", b =>
                 {
                     b.HasOne("PPTBoardAPI.DTOs.Person", "Person")
@@ -485,11 +446,6 @@ namespace PPTBoardAPI.Migrations
                     b.Navigation("Groups");
 
                     b.Navigation("SpecialityDiscipline");
-                });
-
-            modelBuilder.Entity("PPTBoardAPI.Entities.Student", b =>
-                {
-                    b.Navigation("Attendances");
                 });
 #pragma warning restore 612, 618
         }

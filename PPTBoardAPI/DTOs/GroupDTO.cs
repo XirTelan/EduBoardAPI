@@ -1,5 +1,4 @@
-﻿using PPTBoardAPI.Entities;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace PPTBoardAPI.DTOs
 {
@@ -10,7 +9,7 @@ namespace PPTBoardAPI.DTOs
         public string Name { get; set; }
         public string Year { get; set; }
 
-        public int CuratorId { get; set; }
+        public Person Person { get; set; }
 
         public SpecialityDTO Speciality { get; set; }
 

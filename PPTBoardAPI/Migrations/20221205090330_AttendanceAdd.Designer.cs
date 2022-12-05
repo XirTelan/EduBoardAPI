@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPTBoardAPI;
 
@@ -11,9 +12,10 @@ using PPTBoardAPI;
 namespace PPTBoardAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221205090330_AttendanceAdd")]
+    partial class AttendanceAdd
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -238,6 +240,9 @@ namespace PPTBoardAPI.Migrations
                     b.Property<int>("Month")
                         .HasColumnType("int");
 
+                    b.Property<int>("StudId")
+                        .HasColumnType("int");
+
                     b.Property<int>("StudentId")
                         .HasColumnType("int");
 
@@ -418,7 +423,7 @@ namespace PPTBoardAPI.Migrations
             modelBuilder.Entity("PPTBoardAPI.Entities.Attendance", b =>
                 {
                     b.HasOne("PPTBoardAPI.Entities.Student", "Student")
-                        .WithMany("Attendances")
+                        .WithMany()
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -485,11 +490,6 @@ namespace PPTBoardAPI.Migrations
                     b.Navigation("Groups");
 
                     b.Navigation("SpecialityDiscipline");
-                });
-
-            modelBuilder.Entity("PPTBoardAPI.Entities.Student", b =>
-                {
-                    b.Navigation("Attendances");
                 });
 #pragma warning restore 612, 618
         }
