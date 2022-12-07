@@ -25,6 +25,13 @@ namespace PPTBoardAPI.Controllers
             this.context = context;
             this.mapper = mapper;
         }
+        [HttpGet]
+        public async Task<ActionResult<List<AttendanceDTO>>> Get()
+        {
+            var queryable = await context.Attendances.ToListAsync();
+            List<AttendanceDTO> result = mapper.Map<List<AttendanceDTO>>(queryable);
+            return result;
+        }
 
         [HttpGet("{id:int}")]
         public async Task<ActionResult<List<AttendanceDTO>>> GetByGroipId(int id)
@@ -38,9 +45,21 @@ namespace PPTBoardAPI.Controllers
         [HttpPost]
         public async Task<ActionResult> CreateRecord([FromForm] AttendanceCreationDTO attendanceCreationDTO)
         {
-            context.Attendances.Add(mapper.Map<Attendance>(attendanceCreationDTO));
-            await context.SaveChangesAsync();
-            return NoContent();
+            var attendanceRecord = await context.Attendances.Where(a => a.StudentId == attendanceCreationDTO.StudentId && a.Year == attendanceCreationDTO.Year && a.Month == attendanceCreationDTO.Month && a.Day == attendanceCreationDTO.Day).FirstOrDefaultAsync();
+            if (attendanceRecord == null)
+            {
+                context.Attendances.Add(mapper.Map<Attendance>(attendanceCreationDTO));
+                await context.SaveChangesAsync();
+
+                return NoContent();
+            }
+            else
+            {
+                attendanceRecord = mapper.Map(attendanceCreationDTO, attendanceRecord);
+                await context.SaveChangesAsync();
+
+                return NoContent();
+            }
         }
     }
 }

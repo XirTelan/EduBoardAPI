@@ -61,7 +61,7 @@ namespace PPTBoardAPI.Controllers
         {
             var user = await userManager.FindByIdAsync(userRoleDTO.UserId);
             var claims = await userManager.GetClaimsAsync(user);
-            var claim = claims.First(c => c.Type == "type");
+            var claim = claims.FirstOrDefault(c => c.Type == "type");
             if (claim != null)
             {
                 if (claim.Value == userRoleDTO.Role)
