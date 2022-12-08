@@ -29,14 +29,16 @@ namespace PPTBoardAPI.Controllers
             return mapper.Map<List<GroupDTO>>(groups);
 
         }
-        [HttpGet("filterByYear")]
-        public async Task<ActionResult<List<GroupDTO>>> GetByCourse([FromQuery] int course)
+        [HttpGet("getindexlist")]
+        public async Task<ActionResult<List<GroupIndexDTO>>> GetIndexList()
         {
             int year = DateTime.Now.Year;
             int month = DateTime.Now.Month;
-            var queryable = context.Groups.Where(g => ((year - Int32.Parse(g.Year)) + 1) == course && month >= 9).Include(g => g.Students).Include(x => x.Speciality).AsQueryable();
+            var queryable = context.Groups.AsQueryable();
+            if (queryable == null)
+                return NoContent();
             var groups = await queryable.OrderBy(x => x.Name).ToListAsync();
-            return mapper.Map<List<GroupDTO>>(groups);
+            return mapper.Map<List<GroupIndexDTO>>(groups);
 
         }
         [HttpGet("filter")]

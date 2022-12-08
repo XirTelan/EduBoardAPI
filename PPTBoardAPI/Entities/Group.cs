@@ -10,7 +10,7 @@ namespace PPTBoardAPI.Entities
         [Required]
         public string Name { get; set; }
         [Required]
-        public string Year { get; set; }
+        public int Year { get; set; }
         public string? PersonId { get; set; }
         public Person? Person { get; set; }
 

@@ -21,6 +21,7 @@ namespace PPTBoardAPI.Helpers
 
             CreateMap<GroupDTO, Group>().ReverseMap();
             CreateMap<GroupCreationDTO, Group>();
+            CreateMap<Group, GroupIndexDTO>();
 
             CreateMap<DisciplineDTO, Discipline>().ReverseMap();
             CreateMap<DisciplineCreationDTO, Discipline>();
