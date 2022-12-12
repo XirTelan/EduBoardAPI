@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PPTBoardAPI;
 
@@ -11,9 +12,10 @@ using PPTBoardAPI;
 namespace PPTBoardAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221212092451_ControllReacords")]
+    partial class ControllReacords
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -270,6 +272,9 @@ namespace PPTBoardAPI.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("Month")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StudId")
                         .HasColumnType("int");
 
                     b.Property<int>("StudentId")

@@ -23,5 +23,7 @@ namespace PPTBoardAPI
         public DbSet<Group> Groups { get; set; }
         public DbSet<Speciality> Specialities { get; set; }
         public DbSet<Student> Students { get; set; }
+        public DbSet<ControllRecord> ControllRecords { get; set; }
+        public DbSet<ControllType> ControllTypes { get; set; }
     }
 }

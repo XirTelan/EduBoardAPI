@@ -30,7 +30,7 @@ namespace PPTBoardAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<List<AttendanceGridRowDTO>>> GetByGroipId([FromQuery] int groupId, [FromQuery] int month, [FromQuery] int year)
         {
-            List<AttendanceGridRowDTO> result = new List<AttendanceGridRowDTO>();
+            List<AttendanceGridRowDTO> result = new();
             var students = context.Groups.Include(g => g.Students).FirstOrDefault(g => g.Id == groupId)?.Students.AsEnumerable();
             if (students == null) return NotFound();
             foreach (var student in students)
