@@ -53,6 +53,24 @@ namespace PPTBoardAPI.Controllers
                 return NotFound();
             else return mapper.Map<DisciplineDTO>(discipline);
         }
+        [HttpGet("group/{id:int}")]
+        public async Task<ActionResult<List<DisciplineDTO>>> GetByGroupId(int id)
+        {
+
+            var group = await context.Groups.Where(g => g.Id == id).FirstOrDefaultAsync();
+            if (group == null) return NotFound();
+            var speciality = await context.Specialities.Include(s => s.SpecialityDiscipline).ThenInclude(sd => sd.Discipline).Where(s => s.Id == group.SpecialityId).FirstOrDefaultAsync();
+            if (speciality == null) return NotFound();
+            var result = new List<Discipline>();
+            foreach (var record in speciality.SpecialityDiscipline)
+            {
+                result.Add(record.Discipline);
+            }
+
+            if (result.Count == 0)
+                return NotFound();
+            else return mapper.Map<List<DisciplineDTO>>(result);
+        }
 
         [HttpPost]
         public async Task<ActionResult> Post([FromBody] DisciplineCreationDTO disciplineCreationDTO)
