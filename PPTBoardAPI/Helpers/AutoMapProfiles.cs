@@ -29,6 +29,8 @@ namespace PPTBoardAPI.Helpers
             CreateMap<AttendanceDTO, Attendance>().ReverseMap();
             CreateMap<AttendanceCreationDTO, Attendance>();
 
+            CreateMap<ControllRecordCreationDTO, ControllRecord>();
+
             CreateMap<Person, UserDTO>();
 
         }

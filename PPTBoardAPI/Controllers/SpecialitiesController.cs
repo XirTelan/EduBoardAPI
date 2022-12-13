@@ -1,6 +1,4 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPTBoardAPI.DTOs;
@@ -49,7 +47,7 @@ namespace PPTBoardAPI.Controllers
         [HttpGet("{Id:int}")]
         public async Task<ActionResult<SpecialityDTO>> GetSpecialitiesById(int Id)
         {
-            var speciality = await context.Specialities.Include(x=>x.SpecialityDiscipline).ThenInclude(x=>x.Discipline).FirstOrDefaultAsync(speciality => speciality.Id == Id);
+            var speciality = await context.Specialities.Include(x => x.SpecialityDiscipline).ThenInclude(x => x.Discipline).FirstOrDefaultAsync(speciality => speciality.Id == Id);
             if (speciality == null)
             {
                 return NotFound();
@@ -62,23 +60,25 @@ namespace PPTBoardAPI.Controllers
             var specialityResult = await GetSpecialitiesById(id);
             if (specialityResult.Result is NotFoundResult) return NotFound();
             var speciality = specialityResult.Value;
-            var selectedDisciplinesId = speciality!.Disciplines.Select(x=>x.Id).ToList();
-            var nonSelectedDisciplines = await context.Disciplines.Where(x=>!selectedDisciplinesId.Contains(x.Id)).ToListAsync();
+            var selectedDisciplinesId = speciality!.Disciplines.Select(x => x.Id).ToList();
+            var nonSelectedDisciplines = await context.Disciplines.Where(x => !selectedDisciplinesId.Contains(x.Id)).ToListAsync();
             SpecialityEditDTO response = new SpecialityEditDTO();
             response.speciality = speciality;
             response.selectedDisciplines = speciality.Disciplines;
-            response.nonSelectedDisciplines =mapper.Map<List<DisciplineDTO>>(nonSelectedDisciplines);
+            response.nonSelectedDisciplines = mapper.Map<List<DisciplineDTO>>(nonSelectedDisciplines);
             return response;
         }
         [HttpPost]
-        public async Task<ActionResult> Post([FromBody] SpecialityCreationDTO specialityCreationDTO) {
+        public async Task<ActionResult> Post([FromBody] SpecialityCreationDTO specialityCreationDTO)
+        {
             var speciality = mapper.Map<Speciality>(specialityCreationDTO);
             context.Specialities.Add(speciality);
             await context.SaveChangesAsync();
             return NoContent();
         }
         [HttpDelete("{id:int}")]
-        public async Task<ActionResult> Delete(int id) {
+        public async Task<ActionResult> Delete(int id)
+        {
             var speciality = await context.Specialities.AnyAsync(speciality => speciality.Id == id);
             if (!speciality)
                 return NotFound();
@@ -87,14 +87,14 @@ namespace PPTBoardAPI.Controllers
             return NoContent();
         }
         [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put(int id,[FromBody] SpecialityCreationDTO specialityCreationDTO)
+        public async Task<ActionResult> Put(int id, [FromBody] SpecialityCreationDTO specialityCreationDTO)
         {
-            var speciality = await context.Specialities.Include(x=>x.SpecialityDiscipline).FirstOrDefaultAsync(speciality => speciality.Id == id);
+            var speciality = await context.Specialities.Include(x => x.SpecialityDiscipline).FirstOrDefaultAsync(speciality => speciality.Id == id);
             if (speciality == null)
             {
                 return NotFound();
             }
-            speciality = mapper.Map(specialityCreationDTO,speciality);
+            speciality = mapper.Map(specialityCreationDTO, speciality);
             await context.SaveChangesAsync();
             return NoContent();
         }

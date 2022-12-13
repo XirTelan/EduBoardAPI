@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPTBoardAPI.DTOs;
@@ -11,17 +10,12 @@ namespace PPTBoardAPI.Controllers
     [Route("api/attendance")]
     public class AttendanceController : ControllerBase
     {
-        private readonly UserManager<Person> userManager;
-        private readonly SignInManager<Person> signInManager;
-        private readonly IConfiguration configuration;
+
         private readonly ApplicationDbContext context;
         private readonly IMapper mapper;
 
-        public AttendanceController(UserManager<Person> userManager, SignInManager<Person> signInManager, IConfiguration configuration, ApplicationDbContext context, IMapper mapper)
+        public AttendanceController(ApplicationDbContext context, IMapper mapper)
         {
-            this.userManager = userManager;
-            this.signInManager = signInManager;
-            this.configuration = configuration;
             this.context = context;
             this.mapper = mapper;
         }
