@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using PPTBoardAPI.DTOs;
 using PPTBoardAPI.Entities;
 using PPTBoardAPI.Helpers;
+using PPTBoardAPI.Service;
 
 namespace PPTBoardAPI.Controllers
 {
@@ -12,12 +13,14 @@ namespace PPTBoardAPI.Controllers
     public class DisciplinesController : ControllerBase
     {
         private readonly ApplicationDbContext context;
+        private readonly StatisticService statisticService;
         private readonly IMapper mapper;
 
-        public DisciplinesController(ApplicationDbContext context, IMapper mapper)
+        public DisciplinesController(ApplicationDbContext context, IMapper mapper, StatisticService statisticService)
         {
             this.context = context;
             this.mapper = mapper;
+            this.statisticService = statisticService;
         }
 
         [HttpGet]
@@ -56,20 +59,12 @@ namespace PPTBoardAPI.Controllers
         [HttpGet("group/{id:int}")]
         public async Task<ActionResult<List<DisciplineDTO>>> GetByGroupId(int id)
         {
-
             var group = await context.Groups.Where(g => g.Id == id).FirstOrDefaultAsync();
-            if (group == null) return NotFound();
-            var speciality = await context.Specialities.Include(s => s.SpecialityDiscipline).ThenInclude(sd => sd.Discipline).Where(s => s.Id == group.SpecialityId).FirstOrDefaultAsync();
-            if (speciality == null) return NotFound();
-            var result = new List<Discipline>();
-            foreach (var record in speciality.SpecialityDiscipline)
-            {
-                result.Add(record.Discipline);
-            }
-
-            if (result.Count == 0)
+            if (group == null || group.SpecialityId == null) return NotFound();
+            var result = statisticService.GetDisciplineListBySpecId((int)group.SpecialityId);
+            if (result.Result.Count == 0)
                 return NotFound();
-            else return mapper.Map<List<DisciplineDTO>>(result);
+            else return mapper.Map<List<DisciplineDTO>>(result.Result);
         }
 
         [HttpPost]

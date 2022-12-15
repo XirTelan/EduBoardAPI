@@ -22,24 +22,24 @@ namespace PPTBoardAPI.Controllers
 
 
         [HttpGet]
-        public async Task<ActionResult<List<AttendanceGridRowDTO>>> GetByGroipId([FromQuery] int groupId, [FromQuery] int month, [FromQuery] int year)
+        public async Task<ActionResult<List<DataGridRowDTO>>> GetByGroipId([FromQuery] int groupId, [FromQuery] int month, [FromQuery] int year)
         {
-            List<AttendanceGridRowDTO> result = new();
+            List<DataGridRowDTO> result = new();
             var students = context.Groups.Include(g => g.Students).FirstOrDefault(g => g.Id == groupId)?.Students.AsEnumerable();
             if (students == null) return NotFound();
             foreach (var student in students)
             {
-                AttendanceGridRowDTO attendanceGridRowDTO = new()
+                DataGridRowDTO attendanceGridRowDTO = new()
                 {
-                    StudentId = student.Id,
-                    StudentFio = $"{student.SecondName} {student.FirstName} {student.MiddleName}",
-                    Days = new List<AttendanceDayValueDTO>()
+                    Id = student.Id,
+                    Title = $"{student.SecondName} {student.FirstName} {student.MiddleName}",
+                    DataGridCells = new List<DataGridCellDTO>()
                 };
                 var attendancesRecords = await context.Attendances.Where(a => a.Student.Id == student.Id && a.Year == year && a.Month == month).ToListAsync();
                 if (attendancesRecords.Any())
                     foreach (var record in attendancesRecords)
                     {
-                        attendanceGridRowDTO.Days.Add(new AttendanceDayValueDTO { Day = record.Day, Value = record.Value });
+                        attendanceGridRowDTO.DataGridCells.Add(new DataGridCellDTO { Id = record.Day.ToString(), Value = record.Value });
                     }
                 result.Add(attendanceGridRowDTO);
             }

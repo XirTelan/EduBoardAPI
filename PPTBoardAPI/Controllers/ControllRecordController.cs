@@ -19,29 +19,34 @@ namespace PPTBoardAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<ControllGridRowDTO>>> GetByGroipId([FromQuery] int typeId, [FromQuery] int groupId, [FromQuery] int month, [FromQuery] int year)
+        public async Task<ActionResult<List<DataGridRowDTO>>> GetByGroipId([FromQuery] int typeId, [FromQuery] int groupId, [FromQuery] int month, [FromQuery] int year)
         {
-            List<ControllGridRowDTO> result = new();
+            List<DataGridRowDTO> result = new();
             var students = context.Groups.Include(g => g.Students).FirstOrDefault(g => g.Id == groupId)?.Students.AsEnumerable();
             if (students == null) return NotFound();
+            var controllRecordsPerPeriod = context.ControllRecords.Include(cr => cr.Student).Where(a => a.ControllTypeId == typeId && a.Year == year && a.Month == month && a.Student.GroupId == groupId);
             foreach (var student in students)
             {
-                ControllGridRowDTO controllGridRowDTO = new()
+                DataGridRowDTO controllGridRowDTO = new()
                 {
-                    StudentId = student.Id,
-                    StudentFio = $"{student.SecondName} {student.FirstName} {student.MiddleName}",
-                    Disciplines = new List<ControllDisciplineValueDTO>()
+                    Id = student.Id,
+                    Title = $"{student.SecondName} {student.FirstName} {student.MiddleName}",
+                    DataGridCells = new List<DataGridCellDTO>()
                 };
-                var controllRecords = await context.ControllRecords.Where(a => a.ControllTypeId == typeId && a.Student.Id == student.Id && a.Year == year && a.Month == month).ToListAsync();
+                var controllRecords = await controllRecordsPerPeriod.Where(a => a.Student.Id == student.Id).ToListAsync();
                 if (controllRecords.Any())
                     foreach (var record in controllRecords)
                     {
-                        controllGridRowDTO.Disciplines.Add(new ControllDisciplineValueDTO { Id = record.DisciplineId, Value = record.Value });
+                        controllGridRowDTO.DataGridCells.Add(new DataGridCellDTO { Id = record.DisciplineId.ToString(), Value = record.Value });
                     }
+
                 result.Add(controllGridRowDTO);
             }
+
+
             return result;
         }
+
 
         [HttpPost]
         public async Task<ActionResult> CreateRecord([FromBody] ControllRecordCreationDTO controllRecordCreationDTO)
@@ -69,5 +74,14 @@ namespace PPTBoardAPI.Controllers
             return NoContent();
             //}
         }
+        [HttpGet("statistic/{id:int}")]
+        public int GetStatisticById(int id)
+        {
+            int groupId = 1;
+            var result = context.ControllRecords.Where(cr => cr.Student.GroupId == groupId && cr.DisciplineId == id && cr.Month == 9 && cr.Year == 2022).Select(cr => cr.Value).Distinct().Count();
+            return result;
+        }
+
+
     }
 }

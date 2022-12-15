@@ -1,8 +1,8 @@
 ﻿namespace PPTBoardAPI.DTOs
 {
-    public class ControllDisciplineValueDTO
+    public class DataGridCellDTO
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
         public string Value { get; set; }
     }
 }
