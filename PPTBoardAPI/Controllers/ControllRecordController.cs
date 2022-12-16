@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPTBoardAPI.DTOs;
+using PPTBoardAPI.Service;
 
 namespace PPTBoardAPI.Controllers
 {
@@ -11,11 +12,13 @@ namespace PPTBoardAPI.Controllers
     {
         private readonly ApplicationDbContext context;
         private readonly IMapper mapper;
+        private readonly StatisticService statisticService;
 
         public ControllRecordController(ApplicationDbContext context, IMapper mapper)
         {
             this.context = context;
             this.mapper = mapper;
+            this.statisticService = new StatisticService(context);
         }
 
         [HttpGet]
@@ -42,9 +45,13 @@ namespace PPTBoardAPI.Controllers
 
                 result.Add(controllGridRowDTO);
             }
-
-
             return result;
+        }
+        [HttpGet("statistic/")]
+        public async Task<ActionResult<List<DataGridRowDTO>>> GetStatisticByGroipId([FromQuery] int typeId, [FromQuery] int groupId, [FromQuery] int month, [FromQuery] int year)
+        {
+            var controllRecordsPerPeriod = await context.ControllRecords.Include(cr => cr.Student).Where(a => a.ControllTypeId == typeId && a.Year == year && a.Month == month && a.Student.GroupId == groupId).ToListAsync();
+            return statisticService.GetGroupStatistic(groupId, controllRecordsPerPeriod);
         }
 
 
@@ -74,13 +81,13 @@ namespace PPTBoardAPI.Controllers
             return NoContent();
             //}
         }
-        [HttpGet("statistic/{id:int}")]
-        public int GetStatisticById(int id)
-        {
-            int groupId = 1;
-            var result = context.ControllRecords.Where(cr => cr.Student.GroupId == groupId && cr.DisciplineId == id && cr.Month == 9 && cr.Year == 2022).Select(cr => cr.Value).Distinct().Count();
-            return result;
-        }
+
+        //public int GetStatisticById(int id)
+        //{
+        //    int groupId = 1;
+        //    var result = context.ControllRecords.Where(cr => cr.Student.GroupId == groupId && cr.DisciplineId == id && cr.Month == 9 && cr.Year == 2022).Select(cr => cr.Value).Distinct().Count();
+        //    return result;
+        //}
 
 
     }

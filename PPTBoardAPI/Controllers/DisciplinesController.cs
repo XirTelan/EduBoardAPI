@@ -16,11 +16,11 @@ namespace PPTBoardAPI.Controllers
         private readonly StatisticService statisticService;
         private readonly IMapper mapper;
 
-        public DisciplinesController(ApplicationDbContext context, IMapper mapper, StatisticService statisticService)
+        public DisciplinesController(ApplicationDbContext context, IMapper mapper)
         {
             this.context = context;
             this.mapper = mapper;
-            this.statisticService = statisticService;
+            this.statisticService = new StatisticService(context);
         }
 
         [HttpGet]

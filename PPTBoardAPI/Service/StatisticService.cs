@@ -27,27 +27,24 @@ namespace PPTBoardAPI.Service
             return (result);
         }
 
-        public List<DataGridCellDTO> GetGroupStatistic(int groipId, List<ControllRecord> controllRecords)
+        public List<DataGridRowDTO> GetGroupStatistic(int groipId, List<ControllRecord> controllRecords)
         {
             List<DataGridRowDTO> resultRows = new();
-            List<DataGridCellDTO> result = new();
-            List<Discipline> disciplines = GetDisciplineListBySpecId(groipId).Result;
-            DataGridRowDTO row = new DataGridRowDTO();
-            //row.Id = discipline.Id;
-            //row.Title
-            //foreach (Discipline discipline in disciplines)
-            //{
-
-            //    resultRows. = controllRecords.GroupBy(cr => cr.Value).Select(g => new DataGridCellDTO { Id = g.Key, Value = g.Count().ToString() }).ToList();
-            //}
-            return result;
+            var dsiciplines = GetDisciplineListBySpecId(1).Result;
+            foreach (var dsicipline in dsiciplines)
+            {
+                DataGridRowDTO dataGridRow = new()
+                {
+                    Id = dsicipline.Id,
+                    Title = dsicipline.Name,
+                    DataGridCells = controllRecords.Where(cr => cr.DisciplineId == dsicipline.Id).GroupBy(cr => cr.Value).Select(g => new DataGridCellDTO { Id = g.Key, Value = g.Count().ToString() }).ToList()
+                };
+                resultRows.Add(dataGridRow);
+            }
+            //dataGridRow.DataGridCells = controllRecords.GroupBy(cr => cr.Value).Select(g => new DataGridCellDTO { Id = g.Key, Value = g.Count().ToString() }).ToList();
+            return resultRows;
         }
 
-        public int GetRecordsCountByValue(string value, List<ControllRecord> controllRecords)
-        {
-            var result = controllRecords.Where(cr => cr.Value == value).Count();
-            return result;
-        }
 
 
 
