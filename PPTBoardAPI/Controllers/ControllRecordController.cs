@@ -1,13 +1,17 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPTBoardAPI.DTOs;
+using PPTBoardAPI.Entities;
 using PPTBoardAPI.Service;
 
 namespace PPTBoardAPI.Controllers
 {
     [ApiController]
     [Route("api/controll")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class ControllRecordController : ControllerBase
     {
         private readonly ApplicationDbContext context;
@@ -56,39 +60,29 @@ namespace PPTBoardAPI.Controllers
 
 
         [HttpPost]
-        public async Task<ActionResult> CreateRecord([FromBody] ControllRecordCreationDTO controllRecordCreationDTO)
+        public async Task<ActionResult> CreateRecords([FromBody] List<ControllRecordCreationDTO> controllRecordCreationDTOs)
         {
-            //var controllRecord = await context.Attendances.Where(a => a.StudentId == controllRecordCreationDTO.StudentId && a.Year == controllRecordCreationDTO.Year && a.Month == attendanceCreationDTO.Month && a.Day == attendanceCreationDTO.Day).FirstOrDefaultAsync();
-            //if (controllRecord == null)
-            //{
-            //    context.ControllRecords.Add(mapper.Map<ControllRecord>(controllRecordCreationDTO));
-            //    await context.SaveChangesAsync();
-
-            //    return NoContent();
-            //}
-            //else if (controllRecordCreationDTO.Value == "")
-            //{
-            //    context.ControllRecords.Remove(controllRecord);
-            //    await context.SaveChangesAsync();
-            //    return NoContent();
-
-            //}
-            //else
-            //{
-            //    controllRecord = mapper.Map(controllRecordCreationDTO, controllRecord);
-            //    await context.SaveChangesAsync();
-
+            foreach (ControllRecordCreationDTO crDTO in controllRecordCreationDTOs)
+            {
+                var controllRecord = await context.ControllRecords.Where(a => a.StudentId == crDTO.StudentId && a.Year == crDTO.Year && a.Month == crDTO.Month && a.DisciplineId == crDTO.DisciplineId).FirstOrDefaultAsync();
+                if (controllRecord == null)
+                {
+                    context.ControllRecords.Add(mapper.Map<ControllRecord>(crDTO));
+                    await context.SaveChangesAsync();
+                }
+                else if (crDTO.Value == "")
+                {
+                    context.ControllRecords.Remove(controllRecord);
+                    await context.SaveChangesAsync();
+                }
+                else
+                {
+                    if (crDTO.Value == controllRecord.Value) continue;
+                    controllRecord = mapper.Map(crDTO, controllRecord);
+                    await context.SaveChangesAsync();
+                }
+            }
             return NoContent();
-            //}
         }
-
-        //public int GetStatisticById(int id)
-        //{
-        //    int groupId = 1;
-        //    var result = context.ControllRecords.Where(cr => cr.Student.GroupId == groupId && cr.DisciplineId == id && cr.Month == 9 && cr.Year == 2022).Select(cr => cr.Value).Distinct().Count();
-        //    return result;
-        //}
-
-
     }
 }

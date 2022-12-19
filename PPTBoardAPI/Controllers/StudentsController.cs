@@ -60,6 +60,7 @@ namespace PPTBoardAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<ActionResult> Post([FromBody] StudentCreationDTO studentCreationDTO)
         {
             context.Students.Add(mapper.Map<Student>(studentCreationDTO));
@@ -68,6 +69,7 @@ namespace PPTBoardAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<ActionResult> Put(int id, [FromBody] StudentCreationDTO studentDTO)
         {
             var student = await context.Students.FirstOrDefaultAsync(x => x.Id == id);
@@ -78,6 +80,7 @@ namespace PPTBoardAPI.Controllers
             return NoContent();
         }
         [HttpDelete("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<ActionResult> Delete(int id)
         {
             Student? student = await context.Students.FirstOrDefaultAsync(x => x.Id == id);

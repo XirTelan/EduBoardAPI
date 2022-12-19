@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPTBoardAPI.DTOs;
@@ -8,6 +10,7 @@ namespace PPTBoardAPI.Controllers
 {
     [ApiController]
     [Route("api/attendance")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class AttendanceController : ControllerBase
     {
 
@@ -66,6 +69,7 @@ namespace PPTBoardAPI.Controllers
             }
             else
             {
+                if (attendanceCreationDTO.Value == attendanceRecord.Value) return NoContent();
                 attendanceRecord = mapper.Map(attendanceCreationDTO, attendanceRecord);
                 await context.SaveChangesAsync();
 

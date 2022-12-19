@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPTBoardAPI.DTOs;
@@ -10,6 +12,7 @@ namespace PPTBoardAPI.Controllers
 {
     [ApiController]
     [Route("api/disciplines")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class DisciplinesController : ControllerBase
     {
         private readonly ApplicationDbContext context;
@@ -68,6 +71,7 @@ namespace PPTBoardAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<ActionResult> Post([FromBody] DisciplineCreationDTO disciplineCreationDTO)
         {
             context.Disciplines.Add(mapper.Map<Discipline>(disciplineCreationDTO));
@@ -76,6 +80,7 @@ namespace PPTBoardAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<ActionResult> Put(int id, [FromBody] DisciplineCreationDTO disciplineDTO)
         {
             var discipline = await context.Disciplines.FirstOrDefaultAsync(x => x.Id == id);
@@ -86,6 +91,7 @@ namespace PPTBoardAPI.Controllers
             return NoContent();
         }
         [HttpDelete("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<ActionResult> Delete(int id)
         {
             Discipline? discipline = await context.Disciplines.FirstOrDefaultAsync(x => x.Id == id);

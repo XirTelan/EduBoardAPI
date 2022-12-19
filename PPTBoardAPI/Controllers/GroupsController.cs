@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPTBoardAPI.DTOs;
@@ -9,6 +11,7 @@ namespace PPTBoardAPI.Controllers
 {
     [ApiController]
     [Route("api/groups")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class GroupsController : ControllerBase
     {
         private readonly ApplicationDbContext context;
@@ -68,6 +71,7 @@ namespace PPTBoardAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<ActionResult> Post([FromBody] GroupCreationDTO groupCreationDTO)
         {
             context.Groups.Add(mapper.Map<Group>(groupCreationDTO));
@@ -76,6 +80,7 @@ namespace PPTBoardAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<ActionResult> Put(int id, [FromBody] GroupCreationDTO groupDTO)
         {
             var group = await context.Groups.FirstOrDefaultAsync(x => x.Id == id);
@@ -86,6 +91,7 @@ namespace PPTBoardAPI.Controllers
             return NoContent();
         }
         [HttpDelete("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<ActionResult> Delete(int id)
         {
             Group? group = await context.Groups.FirstOrDefaultAsync(x => x.Id == id);

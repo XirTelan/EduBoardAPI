@@ -27,10 +27,11 @@ namespace PPTBoardAPI.Service
             return (result);
         }
 
-        public List<DataGridRowDTO> GetGroupStatistic(int groipId, List<ControllRecord> controllRecords)
+        public List<DataGridRowDTO> GetGroupStatistic(int groupId, List<ControllRecord> controllRecords)
         {
             List<DataGridRowDTO> resultRows = new();
-            var dsiciplines = GetDisciplineListBySpecId(1).Result;
+            int specId = (int)context.Groups.Where(g => g.Id == groupId).First().SpecialityId;
+            var dsiciplines = GetDisciplineListBySpecId(specId).Result;
             foreach (var dsicipline in dsiciplines)
             {
                 DataGridRowDTO dataGridRow = new()

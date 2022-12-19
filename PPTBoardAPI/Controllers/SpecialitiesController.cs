@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PPTBoardAPI.DTOs;
@@ -9,7 +11,7 @@ namespace PPTBoardAPI.Controllers
 {
     [Route("api/specialities")]
     [ApiController]
-    //   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class SpecialitiesController : ControllerBase
     {
         private readonly ApplicationDbContext context;
@@ -69,6 +71,7 @@ namespace PPTBoardAPI.Controllers
             return response;
         }
         [HttpPost]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<ActionResult> Post([FromBody] SpecialityCreationDTO specialityCreationDTO)
         {
             var speciality = mapper.Map<Speciality>(specialityCreationDTO);
@@ -77,6 +80,7 @@ namespace PPTBoardAPI.Controllers
             return NoContent();
         }
         [HttpDelete("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<ActionResult> Delete(int id)
         {
             var speciality = await context.Specialities.AnyAsync(speciality => speciality.Id == id);
@@ -87,6 +91,7 @@ namespace PPTBoardAPI.Controllers
             return NoContent();
         }
         [HttpPut("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<ActionResult> Put(int id, [FromBody] SpecialityCreationDTO specialityCreationDTO)
         {
             var speciality = await context.Specialities.Include(x => x.SpecialityDiscipline).FirstOrDefaultAsync(speciality => speciality.Id == id);
