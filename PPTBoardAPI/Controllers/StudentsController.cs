@@ -67,6 +67,28 @@ namespace PPTBoardAPI.Controllers
             await context.SaveChangesAsync();
             return NoContent();
         }
+        [HttpPost("excel")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
+        public async Task<ActionResult> PostFromExcel([FromBody] List<StudentsExcelCreationDTO> studentsExcelCreationDTOs)
+        {
+            List<Student> students = new();
+            foreach (StudentsExcelCreationDTO creationDTO in studentsExcelCreationDTOs)
+            {
+                int groupId = context.Groups.Where(g => g.Name.ToUpper() == creationDTO.GroupName.ToUpper()).Select(g => g.Id).FirstOrDefault();
+                if (groupId == 0) return BadRequest("Group not found");
+                Student student = new()
+                {
+                    FirstName = creationDTO.FirstName,
+                    SecondName = creationDTO.SecondName,
+                    MiddleName = creationDTO.MiddleName,
+                    GroupId = groupId,
+                };
+                students.Add(student);
+            }
+            context.Students.AddRange(students);
+            await context.SaveChangesAsync();
+            return NoContent();
+        }
 
         [HttpPut("{id:int}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
