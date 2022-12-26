@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using PPTBoardAPI.Authentication;
 
 namespace PPTBoardAPI.DTOs
 {

@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using PPTBoardAPI.DTOs;
+using PPTBoardAPI.Authentication;
 using PPTBoardAPI.Entities;
 using System.Diagnostics.CodeAnalysis;
 

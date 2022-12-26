@@ -4,10 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using PPTBoardAPI;
-using PPTBoardAPI.DTOs;
+using PPTBoardAPI.Authentication;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+ConfigurationManager configuration = builder.Configuration;
 
 // Add services to the container.
 
@@ -20,20 +21,39 @@ builder.Services.AddControllers().AddNewtonsoftJson(
 builder.Services.AddIdentity<Person, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.SaveToken = true;
+    options.RequireHttpsMetadata = false;
+    options.TokenValidationParameters = new TokenValidationParameters()
     {
-        options.TokenValidationParameters = new TokenValidationParameters
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ClockSkew = TimeSpan.Zero,
+
+        ValidAudience = configuration["JWT:ValidAudience"],
+        ValidIssuer = configuration["JWT:ValidIssuer"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]))
+    };
+    options.Events = new JwtBearerEvents();
+    options.Events.OnMessageReceived = context =>
+    {
+        if (context.Request.Cookies.ContainsKey("X-Access-Token"))
         {
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["keyjwt"])),
-            ClockSkew = TimeSpan.Zero
-        };
-    });
+            context.Token = context.Request.Cookies["X-Access-Token"];
+        }
+
+        return Task.CompletedTask;
+    };
+});
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("IsAdmin", policy => policy.RequireClaim("type", "admin"));
@@ -48,7 +68,7 @@ builder.Services.AddCors((options) =>
     var frontendUrl = builder.Configuration.GetSection("FrontendURL").Get<List<string>>().ToArray();
     options.AddDefaultPolicy(builder =>
     {
-        builder.WithOrigins(frontendUrl).AllowAnyMethod().AllowAnyHeader().WithExposedHeaders(new string[] { "totalAmountOfRecords" });
+        builder.WithOrigins(frontendUrl).AllowAnyMethod().AllowAnyHeader().AllowCredentials().WithExposedHeaders(new string[] { "totalAmountOfRecords" });
 
     });
 });

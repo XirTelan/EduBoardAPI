@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace PPTBoardAPI.DTOs
+namespace PPTBoardAPI.Authentication
 {
     public class UserRegisterCredentials
     {

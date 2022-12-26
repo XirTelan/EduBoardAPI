@@ -1,4 +1,4 @@
-﻿using PPTBoardAPI.DTOs;
+﻿using PPTBoardAPI.Authentication;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
