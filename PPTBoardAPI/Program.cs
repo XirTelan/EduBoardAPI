@@ -43,16 +43,7 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = configuration["JWT:ValidIssuer"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]))
     };
-    options.Events = new JwtBearerEvents();
-    options.Events.OnMessageReceived = context =>
-    {
-        if (context.Request.Cookies.ContainsKey("X-Access-Token"))
-        {
-            context.Token = context.Request.Cookies["X-Access-Token"];
-        }
 
-        return Task.CompletedTask;
-    };
 });
 builder.Services.AddAuthorization(options =>
 {
@@ -68,7 +59,7 @@ builder.Services.AddCors((options) =>
     var frontendUrl = builder.Configuration.GetSection("FrontendURL").Get<List<string>>().ToArray();
     options.AddDefaultPolicy(builder =>
     {
-        builder.WithOrigins(frontendUrl).AllowAnyMethod().AllowAnyHeader().AllowCredentials().WithExposedHeaders(new string[] { "totalAmountOfRecords" });
+        builder.WithOrigins(frontendUrl).AllowAnyHeader().AllowAnyMethod().AllowCredentials().WithExposedHeaders(new string[] { "totalAmountOfRecords" });
 
     });
 });

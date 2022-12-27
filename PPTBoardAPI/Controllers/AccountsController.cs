@@ -158,7 +158,7 @@ namespace PPTBoardAPI.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<AuthenticationResponse>> Login([FromBody] UserCredentials userCredentials)
+        public async Task<ActionResult> Login([FromBody] UserCredentials userCredentials)
         {
             var result = await signInManager.PasswordSignInAsync(userCredentials.UserName, userCredentials.Password, isPersistent: false, lockoutOnFailure: false);
             var user = await userManager.FindByNameAsync(userCredentials.UserName);
@@ -183,19 +183,18 @@ namespace PPTBoardAPI.Controllers
                 user.RefreshTokenExpiryTime = DateTime.Now.AddDays(refreshTokenValidityInDays);
 
                 await userManager.UpdateAsync(user);
-                Response.Cookies.Append("X-Access-Token", new JwtSecurityTokenHandler().WriteToken(token), new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
-                Response.Cookies.Append("X-Username", user.UserName, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
-                Response.Cookies.Append("X-Refresh-Token", user.RefreshToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
+
+                Response.Cookies.Append("X-Username", user.UserName, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.None, Secure = true });
+                Response.Cookies.Append("X-Refresh-Token", user.RefreshToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.None, Secure = true });
+
                 return Ok(new
                 {
                     AccessToken = new JwtSecurityTokenHandler().WriteToken(token),
-                    RefreshToken = refreshToken,
-                    Expiration = token.ValidTo
                 });
             }
             else
             {
-                return BadRequest(new { result.IsLockedOut, result.IsNotAllowed, result.RequiresTwoFactor });
+                return BadRequest();
             }
         }
 
@@ -219,37 +218,32 @@ namespace PPTBoardAPI.Controllers
         [Route("refresh")]
         public async Task<IActionResult> RefreshToken()
         {
-            var cookie = Request.Cookies;
 
             if (!(Request.Cookies.TryGetValue("X-Username", out var userName) && Request.Cookies.TryGetValue("X-Refresh-Token", out var refreshToken)))
                 return BadRequest();
 
-            var principal = GetPrincipalFromExpiredToken(refreshToken);
-            if (principal == null)
-            {
-                return BadRequest("Invalid access token or refresh token");
-            }
             var user = userManager.Users.FirstOrDefault(p => p.UserName == userName && p.RefreshToken == refreshToken);
 
             if (user == null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.Now)
             {
-                return BadRequest("Invalid access token or refresh token");
+                return BadRequest("Invalid refresh token");
             }
-
-            var newAccessToken = CreateToken(principal.Claims.ToList());
-            var newRefreshToken = GenerateRefreshToken();
-
-            user.RefreshToken = newRefreshToken;
+            var userRoles = await userManager.GetRolesAsync(user);
+            var authClaims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                };
+            foreach (var userRole in userRoles)
+            {
+                authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+            }
+            var newAccessToken = CreateToken(authClaims);
             await userManager.UpdateAsync(user);
-
-            Response.Cookies.Append("X-Access-Token", new JwtSecurityTokenHandler().WriteToken(newAccessToken), new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
-            Response.Cookies.Append("X-Username", user.UserName, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
-            Response.Cookies.Append("X-Refresh-Token", user.RefreshToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
 
             return new ObjectResult(new
             {
                 accessToken = new JwtSecurityTokenHandler().WriteToken(newAccessToken),
-                refreshToken = newRefreshToken
             });
         }
 
@@ -261,25 +255,6 @@ namespace PPTBoardAPI.Controllers
             return Convert.ToBase64String(randomNumber);
         }
 
-        private ClaimsPrincipal? GetPrincipalFromExpiredToken(string? token)
-        {
-            var tokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateAudience = false,
-                ValidateIssuer = false,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"])),
-                ValidateLifetime = false
-            };
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
-            if (securityToken is not JwtSecurityToken jwtSecurityToken || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-                throw new SecurityTokenException("Invalid token");
-
-            return principal;
-
-        }
         [Authorize]
         [HttpPost]
         [Route("revoke/{username}")]
