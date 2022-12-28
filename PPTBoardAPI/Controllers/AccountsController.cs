@@ -94,7 +94,7 @@ namespace PPTBoardAPI.Controllers
             var result = await userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User creation failed! Please check user details and try again." });
-
+            AddRolesToUser(user, new List<string> { UserRoles.User });
             return Ok(new Response { Status = "Success", Message = "User created successfully!" });
         }
         [HttpPost]
@@ -120,22 +120,23 @@ namespace PPTBoardAPI.Controllers
                         messageError += error.Description + Environment.NewLine;
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = messageError });
             }
-
-
-            if (!await roleManager.RoleExistsAsync(UserRoles.Admin))
-                await roleManager.CreateAsync(new IdentityRole(UserRoles.Admin));
-            if (!await roleManager.RoleExistsAsync(UserRoles.User))
-                await roleManager.CreateAsync(new IdentityRole(UserRoles.User));
-
-            if (await roleManager.RoleExistsAsync(UserRoles.Admin))
-            {
-                await userManager.AddToRoleAsync(user, UserRoles.Admin);
-            }
-            if (await roleManager.RoleExistsAsync(UserRoles.Admin))
-            {
-                await userManager.AddToRoleAsync(user, UserRoles.User);
-            }
+            AddRolesToUser(user, new List<string> { UserRoles.User, UserRoles.Admin });
             return Ok(new Response { Status = "Success", Message = "User created successfully!" });
+        }
+
+
+        async private void AddRolesToUser(Person user, List<string> roles)
+        {
+            foreach (string role in roles)
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                    await roleManager.CreateAsync(new IdentityRole(role));
+
+                if (await roleManager.RoleExistsAsync(role))
+                {
+                    await userManager.AddToRoleAsync(user, role);
+                }
+            }
         }
 
         [HttpDelete("{id}")]
@@ -190,12 +191,26 @@ namespace PPTBoardAPI.Controllers
                 return Ok(new
                 {
                     AccessToken = new JwtSecurityTokenHandler().WriteToken(token),
+                    Roles = userRoles
                 });
             }
             else
             {
-                return BadRequest();
+                return StatusCode(StatusCodes.Status400BadRequest, new Response { Status = "Error", Message = "Неверный логин/пароль" });
             }
+        }
+
+        [HttpGet("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            if (!(Request.Cookies.TryGetValue("X-Username", out var userName) && Request.Cookies.TryGetValue("X-Refresh-Token", out var refreshToken)))
+                return BadRequest();
+            var user = userManager.Users.FirstOrDefault(p => p.UserName == userName && p.RefreshToken == refreshToken);
+            if (user is null) return BadRequest();
+            await RevokeToken(user);
+            Response.Cookies.Delete("X-Username", new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.None, Secure = true });
+            Response.Cookies.Delete("X-Refresh-Token", new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.None, Secure = true });
+            return NoContent();
         }
 
         private JwtSecurityToken CreateToken(List<Claim> authClaims)
@@ -239,11 +254,11 @@ namespace PPTBoardAPI.Controllers
                 authClaims.Add(new Claim(ClaimTypes.Role, userRole));
             }
             var newAccessToken = CreateToken(authClaims);
-            await userManager.UpdateAsync(user);
 
             return new ObjectResult(new
             {
-                accessToken = new JwtSecurityTokenHandler().WriteToken(newAccessToken),
+                AccessToken = new JwtSecurityTokenHandler().WriteToken(newAccessToken),
+                Roles = userRoles
             });
         }
 
@@ -255,32 +270,37 @@ namespace PPTBoardAPI.Controllers
             return Convert.ToBase64String(randomNumber);
         }
 
-        [Authorize]
+
         [HttpPost]
         [Route("revoke/{username}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<IActionResult> Revoke(string username)
         {
             var user = await userManager.FindByNameAsync(username);
             if (user is null) return BadRequest("Invalid user name");
-
-            user.RefreshToken = null;
-            await userManager.UpdateAsync(user);
-
+            await RevokeToken(user);
             return NoContent();
         }
 
-        [Authorize]
+
         [HttpPost]
         [Route("revoke-all")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<IActionResult> RevokeAll()
         {
             var users = userManager.Users.ToList();
             foreach (var user in users)
             {
-                user.RefreshToken = null;
-                await userManager.UpdateAsync(user);
+                await RevokeToken(user);
             }
 
+            return NoContent();
+        }
+
+        private async Task<ActionResult> RevokeToken(Person user)
+        {
+            user.RefreshToken = null;
+            await userManager.UpdateAsync(user);
             return NoContent();
         }
     }
