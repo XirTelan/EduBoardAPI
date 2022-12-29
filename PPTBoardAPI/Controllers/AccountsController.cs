@@ -47,13 +47,8 @@ namespace PPTBoardAPI.Controllers
             List<UserDTO> userDTOs = new List<UserDTO>();
             foreach (Person user in users)
             {
-                string role = "";
-                var claims = await userManager.GetClaimsAsync(user);
-                Claim? claim = claims.FirstOrDefault(c => c.Type == "type");
-                if (claim != null)
-                    role = claim.Value;
-
-                userDTOs.Add(new UserDTO { Id = user.Id, UserName = user.UserName, Fio = user.Fio, Role = role });
+                var roles = await userManager.GetRolesAsync(user);
+                userDTOs.Add(new UserDTO { Id = user.Id, UserName = user.UserName, Fio = user.Fio, Roles = roles.ToList() });
             }
 
             return userDTOs;
@@ -64,15 +59,8 @@ namespace PPTBoardAPI.Controllers
         public async Task<ActionResult> ChangeRole([FromBody] UserRoleDTO userRoleDTO)
         {
             var user = await userManager.FindByIdAsync(userRoleDTO.UserId);
-            var claims = await userManager.GetClaimsAsync(user);
-            var claim = claims.FirstOrDefault(c => c.Type == "type");
-            if (claim != null)
-            {
-                if (claim.Value == userRoleDTO.Role)
-                    return NoContent();
-                await userManager.RemoveClaimAsync(user, claim);
-            }
-            await userManager.AddClaimAsync(user, new Claim("type", userRoleDTO.Role));
+            await RemoveRolesFromUser(user);
+            await AddRolesToUser(user, new List<string> { userRoleDTO.Role });
             return NoContent();
         }
 
@@ -94,7 +82,7 @@ namespace PPTBoardAPI.Controllers
             var result = await userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User creation failed! Please check user details and try again." });
-            AddRolesToUser(user, new List<string> { UserRoles.User });
+            await AddRolesToUser(user, new List<string> { UserRoles.User });
             return Ok(new Response { Status = "Success", Message = "User created successfully!" });
         }
         [HttpPost]
@@ -120,12 +108,12 @@ namespace PPTBoardAPI.Controllers
                         messageError += error.Description + Environment.NewLine;
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = messageError });
             }
-            AddRolesToUser(user, new List<string> { UserRoles.User, UserRoles.Admin });
+            await AddRolesToUser(user, new List<string> { UserRoles.User, UserRoles.Admin });
             return Ok(new Response { Status = "Success", Message = "User created successfully!" });
         }
 
 
-        async private void AddRolesToUser(Person user, List<string> roles)
+        async private Task AddRolesToUser(Person user, List<string> roles)
         {
             foreach (string role in roles)
             {
@@ -138,6 +126,19 @@ namespace PPTBoardAPI.Controllers
                 }
             }
         }
+        async private Task RemoveRolesFromUser(Person user)
+        {
+            var userRoles = await userManager.GetRolesAsync(user);
+            foreach (string role in userRoles)
+            {
+                if (await roleManager.RoleExistsAsync(role) && role != UserRoles.User)
+                {
+                    await userManager.RemoveFromRoleAsync(user, role);
+                }
+            }
+
+        }
+
 
         [HttpDelete("{id}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]

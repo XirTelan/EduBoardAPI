@@ -32,6 +32,8 @@ namespace PPTBoardAPI.Helpers
 
             CreateMap<ControllRecordCreationDTO, ControllRecord>();
 
+            CreateMap<ControllTypeDTO, ControllType>().ReverseMap();
+
             CreateMap<Person, UserDTO>();
 
         }
