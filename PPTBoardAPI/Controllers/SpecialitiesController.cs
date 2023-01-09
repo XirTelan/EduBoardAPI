@@ -32,6 +32,13 @@ namespace PPTBoardAPI.Controllers
             return mapper.Map<List<SpecialityDTO>>(specialities);
 
         }
+        [HttpGet("getall")]
+        public async Task<ActionResult<List<SpecialityDTO>>> GetAll()
+        {
+            var specialities = await context.Specialities.Include(x => x.SpecialityDiscipline).ThenInclude(x => x.Discipline).ToListAsync();
+            return mapper.Map<List<SpecialityDTO>>(specialities);
+
+        }
         [HttpGet("filter")]
         public async Task<ActionResult<List<SpecialityDTO>>> GetFiltered([FromQuery] string query)
         {
@@ -86,6 +93,9 @@ namespace PPTBoardAPI.Controllers
             var speciality = await context.Specialities.AnyAsync(speciality => speciality.Id == id);
             if (!speciality)
                 return NotFound();
+            var groups = context.Groups.Where(g => g.SpecialityId == id);
+            foreach (var group in groups)
+                group.Speciality = null;
             context.Remove(new Speciality() { Id = id });
             await context.SaveChangesAsync();
             return NoContent();
