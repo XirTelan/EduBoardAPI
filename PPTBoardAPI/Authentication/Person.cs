@@ -8,6 +8,6 @@ namespace PPTBoardAPI.Authentication
         public string Fio { get; set; }
         public string? RefreshToken { get; set; }
         public DateTime RefreshTokenExpiryTime { get; set; }
-        public List<Group> Groups { get; set; }
+        public List<Group>? Groups { get; set; }
     }
 }

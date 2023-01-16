@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using PPTBoardAPI;
 using PPTBoardAPI.Authentication;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,7 +19,9 @@ builder.Services.AddControllers().AddNewtonsoftJson(
               options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
           });
 
-builder.Services.AddIdentity<Person, IdentityRole>()
+builder.Services.AddIdentity<Person, IdentityRole>(options =>
+    options.ClaimsIdentity.UserIdClaimType = ClaimTypes.NameIdentifier
+)
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 builder.Services.AddAuthentication(options =>
@@ -48,6 +51,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("IsAdmin", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("HasWritePerm", policy => policy.RequireRole(new List<string> { "Admin", "Managment" }));
 });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

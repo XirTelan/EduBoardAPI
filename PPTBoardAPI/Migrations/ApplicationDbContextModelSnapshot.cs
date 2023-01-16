@@ -258,7 +258,7 @@ namespace PPTBoardAPI.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Attendances");
+                    b.ToTable("Attendances", (string)null);
                 });
 
             modelBuilder.Entity("PPTBoardAPI.Entities.ControllRecord", b =>
@@ -295,7 +295,7 @@ namespace PPTBoardAPI.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("ControllRecords");
+                    b.ToTable("ControllRecords", (string)null);
                 });
 
             modelBuilder.Entity("PPTBoardAPI.Entities.ControllType", b =>
@@ -316,7 +316,7 @@ namespace PPTBoardAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ControllTypes");
+                    b.ToTable("ControllTypes", (string)null);
                 });
 
             modelBuilder.Entity("PPTBoardAPI.Entities.Discipline", b =>
@@ -333,7 +333,7 @@ namespace PPTBoardAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Disciplines");
+                    b.ToTable("Disciplines", (string)null);
                 });
 
             modelBuilder.Entity("PPTBoardAPI.Entities.Group", b =>
@@ -363,7 +363,7 @@ namespace PPTBoardAPI.Migrations
 
                     b.HasIndex("SpecialityId");
 
-                    b.ToTable("Groups");
+                    b.ToTable("Groups", (string)null);
                 });
 
             modelBuilder.Entity("PPTBoardAPI.Entities.Speciality", b =>
@@ -380,7 +380,7 @@ namespace PPTBoardAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Specialities");
+                    b.ToTable("Specialities", (string)null);
                 });
 
             modelBuilder.Entity("PPTBoardAPI.Entities.SpecialityDiscipline", b =>
@@ -395,7 +395,7 @@ namespace PPTBoardAPI.Migrations
 
                     b.HasIndex("DisciplineId");
 
-                    b.ToTable("SpecialityDiscipline");
+                    b.ToTable("SpecialityDiscipline", (string)null);
                 });
 
             modelBuilder.Entity("PPTBoardAPI.Entities.Student", b =>
@@ -424,7 +424,7 @@ namespace PPTBoardAPI.Migrations
 
                     b.HasIndex("GroupId");
 
-                    b.ToTable("Students");
+                    b.ToTable("Students", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

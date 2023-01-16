@@ -44,11 +44,25 @@ namespace PPTBoardAPI.Controllers
             IQueryable<Person> queryable = context.Users.AsQueryable();
             await HttpContext.InsertParametersPaginationInHeader(queryable);
             List<Person> users = await queryable.OrderBy(u => u.UserName).Paginate(paginationDTO).ToListAsync();
-            List<UserDTO> userDTOs = new List<UserDTO>();
+            List<UserDTO> userDTOs = new();
             foreach (Person user in users)
             {
                 var roles = await userManager.GetRolesAsync(user);
                 userDTOs.Add(new UserDTO { Id = user.Id, UserName = user.UserName, Fio = user.Fio, Roles = roles.ToList() });
+            }
+
+            return userDTOs;
+        }
+        [HttpGet("getall")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "HasWritePerm")]
+        public async Task<ActionResult<List<UserViewDTO>>> GetAllUsers()
+        {
+            IQueryable<Person> queryable = context.Users.AsQueryable();
+            List<Person> users = await queryable.OrderBy(u => u.UserName).ToListAsync();
+            List<UserViewDTO> userDTOs = new();
+            foreach (Person user in users)
+            {
+                userDTOs.Add(new UserViewDTO { Id = user.Id, Fio = user.Fio });
             }
 
             return userDTOs;
@@ -170,6 +184,7 @@ namespace PPTBoardAPI.Controllers
                 var authClaims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(ClaimTypes.NameIdentifier, user.Id),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 };
                 foreach (var userRole in userRoles)
@@ -191,6 +206,7 @@ namespace PPTBoardAPI.Controllers
 
                 return Ok(new
                 {
+                    user.Fio,
                     AccessToken = new JwtSecurityTokenHandler().WriteToken(token),
                     Roles = userRoles
                 });
@@ -248,6 +264,7 @@ namespace PPTBoardAPI.Controllers
             var authClaims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(ClaimTypes.NameIdentifier, user.Id),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 };
             foreach (var userRole in userRoles)
@@ -258,6 +275,7 @@ namespace PPTBoardAPI.Controllers
 
             return new ObjectResult(new
             {
+                user.Fio,
                 AccessToken = new JwtSecurityTokenHandler().WriteToken(newAccessToken),
                 Roles = userRoles
             });

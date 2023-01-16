@@ -1,10 +1,14 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PPTBoardAPI.Authentication;
 using PPTBoardAPI.DTOs;
 using PPTBoardAPI.Entities;
+using System.Security.Claims;
 
 namespace PPTBoardAPI.Controllers
 {
@@ -16,11 +20,13 @@ namespace PPTBoardAPI.Controllers
 
         private readonly ApplicationDbContext context;
         private readonly IMapper mapper;
+        private readonly UserManager<Person> userManager;
 
-        public AttendanceController(ApplicationDbContext context, IMapper mapper)
+        public AttendanceController(ApplicationDbContext context, IMapper mapper, UserManager<Person> userManager)
         {
             this.context = context;
             this.mapper = mapper;
+            this.userManager = userManager;
         }
 
 
@@ -52,6 +58,11 @@ namespace PPTBoardAPI.Controllers
         [HttpPost]
         public async Task<ActionResult> CreateRecord([FromBody] AttendanceCreationDTO attendanceCreationDTO)
         {
+            bool isInRole = User.IsInRole("Admin") || User.IsInRole("Managment");
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var student = context.Students.Include(s => s.Group).FirstOrDefault(s => s.Id == attendanceCreationDTO.StudentId);
+            bool isCurator = student?.Group?.PersonId == userId;
+            if (!isInRole && !isCurator) return StatusCode(StatusCodes.Status400BadRequest, new Response { Status = "Error", Message = "Нет прав" });
             var attendanceRecord = await context.Attendances.Where(a => a.StudentId == attendanceCreationDTO.StudentId && a.Year == attendanceCreationDTO.Year && a.Month == attendanceCreationDTO.Month && a.Day == attendanceCreationDTO.Day).FirstOrDefaultAsync();
             if (attendanceRecord == null)
             {

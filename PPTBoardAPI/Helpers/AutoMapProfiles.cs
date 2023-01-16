@@ -20,7 +20,8 @@ namespace PPTBoardAPI.Helpers
             CreateMap<StudentViewDTO, Student>().ReverseMap();
             CreateMap<StudentCreationDTO, Student>();
 
-            CreateMap<GroupDTO, Group>().ReverseMap();
+            CreateMap<GroupDTO, Group>();
+            CreateMap<Group, GroupDTO>().ForMember(g => g.Person, options => options.MapFrom(MapPersonUserView));
             CreateMap<GroupCreationDTO, Group>();
             CreateMap<Group, GroupIndexDTO>();
 
@@ -36,6 +37,18 @@ namespace PPTBoardAPI.Helpers
 
             CreateMap<Person, UserDTO>();
 
+        }
+
+        private UserViewDTO MapPersonUserView(Group group, GroupDTO groupDTO)
+        {
+            if (group.Person is null)
+                return new UserViewDTO { Id = String.Empty, Fio = String.Empty };
+            var person = new UserViewDTO
+            {
+                Id = group.Person.Id,
+                Fio = group.Person.Fio
+            };
+            return person;
         }
 
         private List<DisciplineDTO> MapSpecialitiesDisciplines(Speciality speciality, SpecialityDTO specialityDTO)
