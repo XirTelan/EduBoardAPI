@@ -60,9 +60,10 @@ namespace PPTBoardAPI.Controllers
         {
             bool isInRole = User.IsInRole("Admin") || User.IsInRole("Managment");
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var student = context.Students.Include(s => s.Group).FirstOrDefault(s => s.Id == attendanceCreationDTO.StudentId);
-            bool isCurator = student?.Group?.PersonId == userId;
+            var personId = context.Students.Include(s => s.Group).FirstOrDefault(s => s.Id == attendanceCreationDTO.StudentId)?.Group?.PersonId;
+            bool isCurator = personId == userId;
             if (!isInRole && !isCurator) return StatusCode(StatusCodes.Status400BadRequest, new Response { Status = "Error", Message = "Нет прав" });
+
             var attendanceRecord = await context.Attendances.Where(a => a.StudentId == attendanceCreationDTO.StudentId && a.Year == attendanceCreationDTO.Year && a.Month == attendanceCreationDTO.Month && a.Day == attendanceCreationDTO.Day).FirstOrDefaultAsync();
             if (attendanceRecord == null)
             {

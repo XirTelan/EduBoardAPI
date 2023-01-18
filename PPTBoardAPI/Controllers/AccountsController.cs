@@ -288,7 +288,15 @@ namespace PPTBoardAPI.Controllers
             rng.GetBytes(randomNumber);
             return Convert.ToBase64String(randomNumber);
         }
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(string username)
+        {
+            var user = await userManager.FindByNameAsync(username);
+            string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+            IdentityResult passwordChangeResult = await userManager.ResetPasswordAsync(user, resetToken, model.NewPassword);
 
+
+        }
 
         [HttpPost]
         [Route("revoke/{username}")]

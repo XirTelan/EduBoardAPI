@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PPTBoardAPI.Authentication;
 using PPTBoardAPI.DTOs;
 using PPTBoardAPI.Entities;
 using PPTBoardAPI.Service;
+using System.Security.Claims;
 
 namespace PPTBoardAPI.Controllers
 {
@@ -62,6 +64,13 @@ namespace PPTBoardAPI.Controllers
         [HttpPost]
         public async Task<ActionResult> CreateRecords([FromBody] List<ControllRecordCreationDTO> controllRecordCreationDTOs)
         {
+            bool isInRole = User.IsInRole("Admin") || User.IsInRole("Managment");
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var personId = context.Students.Include(s => s.Group).FirstOrDefault(s => s.Id == controllRecordCreationDTOs[0].StudentId)?.Group?.PersonId;
+            bool isCurator = personId == userId;
+            if (!isInRole && !isCurator) return StatusCode(StatusCodes.Status400BadRequest, new Response { Status = "Error", Message = "Нет прав" });
+
+
             foreach (ControllRecordCreationDTO crDTO in controllRecordCreationDTOs)
             {
                 var controllRecord = await context.ControllRecords.Where(a => a.StudentId == crDTO.StudentId && a.Year == crDTO.Year && a.Month == crDTO.Month && a.DisciplineId == crDTO.DisciplineId).FirstOrDefaultAsync();
