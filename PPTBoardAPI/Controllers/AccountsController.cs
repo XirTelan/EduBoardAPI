@@ -67,6 +67,17 @@ namespace PPTBoardAPI.Controllers
 
             return userDTOs;
         }
+        [HttpGet("{id}")]
+        public async Task<ActionResult<UserDTO>> GetUser(string id)
+        {
+            var user = await userManager.FindByIdAsync(id);
+            var userRoles = await userManager.GetRolesAsync(user);
+            List<string> userRolesList = new();
+            foreach (var userRole in userRoles)
+                userRolesList.Add(userRole);
+
+            return new UserDTO { Id = user.Id, UserName = user.UserName, Fio = user.Fio, Roles = userRolesList };
+        }
         [HttpPost("role")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
 
@@ -95,26 +106,6 @@ namespace PPTBoardAPI.Controllers
             };
             var result = await userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User creation failed! Please check user details and try again." });
-            await AddRolesToUser(user, new List<string> { UserRoles.User });
-            return Ok(new Response { Status = "Success", Message = "User created successfully!" });
-        }
-        [HttpPost]
-        [Route("register-admin")]
-        public async Task<IActionResult> RegisterAdmin([FromBody] UserRegisterCredentials model)
-        {
-            var userExists = await userManager.FindByNameAsync(model.UserName);
-            if (userExists != null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User already exists!" });
-
-            Person user = new()
-            {
-                SecurityStamp = Guid.NewGuid().ToString(),
-                UserName = model.UserName,
-                Fio = model.Fio,
-            };
-            var result = await userManager.CreateAsync(user, model.Password);
-            if (!result.Succeeded)
             {
                 string messageError = String.Empty;
                 if (result.Errors.Any())
@@ -122,9 +113,10 @@ namespace PPTBoardAPI.Controllers
                         messageError += error.Description + Environment.NewLine;
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = messageError });
             }
-            await AddRolesToUser(user, new List<string> { UserRoles.User, UserRoles.Admin });
+            await AddRolesToUser(user, new List<string> { UserRoles.User });
             return Ok(new Response { Status = "Success", Message = "User created successfully!" });
         }
+
 
 
         async private Task AddRolesToUser(Person user, List<string> roles)
@@ -288,14 +280,23 @@ namespace PPTBoardAPI.Controllers
             rng.GetBytes(randomNumber);
             return Convert.ToBase64String(randomNumber);
         }
-        [HttpPost]
-        public async Task<IActionResult> ResetPassword(string username)
+        [HttpPut("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
+        public async Task<IActionResult> EditUser(int id, UserRegisterCredentials userCredentials)
         {
-            var user = await userManager.FindByNameAsync(username);
+            var user = await userManager.FindByIdAsync(id.ToString());
+            var passwordChangeResult = await ResetPassword(user, userCredentials.Password);
+            if (!passwordChangeResult.Succeeded) return StatusCode(StatusCodes.Status400BadRequest, new Response { Status = "Error", Message = passwordChangeResult.Errors.ToString() }); ;
+            user.Fio = userCredentials.Fio;
+            await context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        private async Task<IdentityResult> ResetPassword(Person user, string newPassword)
+        {
             string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
-            IdentityResult passwordChangeResult = await userManager.ResetPasswordAsync(user, resetToken, model.NewPassword);
-
-
+            IdentityResult passwordChangeResult = await userManager.ResetPasswordAsync(user, resetToken, newPassword);
+            return passwordChangeResult;
         }
 
         [HttpPost]
@@ -329,6 +330,11 @@ namespace PPTBoardAPI.Controllers
             user.RefreshToken = null;
             await userManager.UpdateAsync(user);
             return NoContent();
+        }
+
+        enum AvailableRoles
+        {
+            User, Admin, Mana
         }
     }
 }
