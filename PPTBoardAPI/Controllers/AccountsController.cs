@@ -37,6 +37,21 @@ namespace PPTBoardAPI.Controllers
             this.mapper = mapper;
         }
 
+        [HttpGet]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "HasWritePerm")]
+        public async Task<ActionResult<List<UserViewDTO>>> GetAllUsers()
+        {
+            IQueryable<Person> queryable = context.Users.AsQueryable();
+            List<Person> users = await queryable.OrderBy(u => u.UserName).ToListAsync();
+            List<UserViewDTO> userDTOs = new();
+            foreach (Person user in users)
+            {
+                userDTOs.Add(new UserViewDTO { Id = user.Id, Fio = user.Fio });
+            }
+
+            return userDTOs;
+        }
+
         [HttpGet("users")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<ActionResult<List<UserDTO>>> GetUserList([FromQuery] PaginationDTO paginationDTO)
@@ -53,20 +68,7 @@ namespace PPTBoardAPI.Controllers
 
             return userDTOs;
         }
-        [HttpGet("getall")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "HasWritePerm")]
-        public async Task<ActionResult<List<UserViewDTO>>> GetAllUsers()
-        {
-            IQueryable<Person> queryable = context.Users.AsQueryable();
-            List<Person> users = await queryable.OrderBy(u => u.UserName).ToListAsync();
-            List<UserViewDTO> userDTOs = new();
-            foreach (Person user in users)
-            {
-                userDTOs.Add(new UserViewDTO { Id = user.Id, Fio = user.Fio });
-            }
 
-            return userDTOs;
-        }
         [HttpGet("{id}")]
         public async Task<ActionResult<UserDTO>> GetUser(string id)
         {
@@ -78,9 +80,22 @@ namespace PPTBoardAPI.Controllers
 
             return new UserDTO { Id = user.Id, UserName = user.UserName, Fio = user.Fio, Roles = userRolesList };
         }
+        [HttpPut("{id}")]
+        public async Task<ActionResult<UserDTO>> EditUser(string id, [FromBody] UserRegisterCredentials userRegisterCredentials)
+        {
+            var user = await userManager.FindByIdAsync(id);
+            user.Fio = userRegisterCredentials.Fio;
+            user.UserName = userRegisterCredentials.UserName;
+            var result = await ChangePassword(user, userRegisterCredentials.Password);
+            if (!result.Succeeded) return StatusCode(StatusCodes.Status400BadRequest, new Response { Status = "Error", Message = result.Errors.ToList().ToString() });
+            await userManager.UpdateAsync(user);
+            return NoContent();
+        }
+
+
+
         [HttpPost("role")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
-
         public async Task<ActionResult> ChangeRole([FromBody] UserRoleDTO userRoleDTO)
         {
             var user = await userManager.FindByIdAsync(userRoleDTO.UserId);
@@ -193,8 +208,8 @@ namespace PPTBoardAPI.Controllers
 
                 await userManager.UpdateAsync(user);
 
-                Response.Cookies.Append("X-Username", user.UserName, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.None, Secure = true });
-                Response.Cookies.Append("X-Refresh-Token", user.RefreshToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.None, Secure = true });
+                Response.Cookies.Append("X-Username", user.UserName, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.None, Secure = true, Expires = DateTimeOffset.Now.AddDays(3) });
+                Response.Cookies.Append("X-Refresh-Token", user.RefreshToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.None, Secure = true, Expires = DateTimeOffset.Now.AddDays(3) });
 
                 return Ok(new
                 {
@@ -280,19 +295,9 @@ namespace PPTBoardAPI.Controllers
             rng.GetBytes(randomNumber);
             return Convert.ToBase64String(randomNumber);
         }
-        [HttpPut("{id:int}")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
-        public async Task<IActionResult> EditUser(int id, UserRegisterCredentials userCredentials)
-        {
-            var user = await userManager.FindByIdAsync(id.ToString());
-            var passwordChangeResult = await ResetPassword(user, userCredentials.Password);
-            if (!passwordChangeResult.Succeeded) return StatusCode(StatusCodes.Status400BadRequest, new Response { Status = "Error", Message = passwordChangeResult.Errors.ToString() }); ;
-            user.Fio = userCredentials.Fio;
-            await context.SaveChangesAsync();
-            return NoContent();
-        }
 
-        private async Task<IdentityResult> ResetPassword(Person user, string newPassword)
+
+        private async Task<IdentityResult> ChangePassword(Person user, string newPassword)
         {
             string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
             IdentityResult passwordChangeResult = await userManager.ResetPasswordAsync(user, resetToken, newPassword);
@@ -311,19 +316,6 @@ namespace PPTBoardAPI.Controllers
         }
 
 
-        [HttpPost]
-        [Route("revoke-all")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
-        public async Task<IActionResult> RevokeAll()
-        {
-            var users = userManager.Users.ToList();
-            foreach (var user in users)
-            {
-                await RevokeToken(user);
-            }
-
-            return NoContent();
-        }
 
         private async Task<ActionResult> RevokeToken(Person user)
         {
@@ -332,9 +324,6 @@ namespace PPTBoardAPI.Controllers
             return NoContent();
         }
 
-        enum AvailableRoles
-        {
-            User, Admin, Mana
-        }
+
     }
 }

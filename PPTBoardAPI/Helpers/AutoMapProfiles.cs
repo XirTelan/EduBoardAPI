@@ -35,6 +35,9 @@ namespace PPTBoardAPI.Helpers
 
             CreateMap<ControllTypeDTO, ControllType>().ReverseMap();
 
+            CreateMap<FileSystemObjView, FileSystemObj>().ReverseMap();
+            CreateMap<FileSystemObjCreationDTO, FileSystemObj>();
+
             CreateMap<Person, UserDTO>();
 
         }

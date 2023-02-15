@@ -9,6 +9,7 @@ namespace PPTBoardAPI.Service
 
         private readonly ApplicationDbContext context;
 
+
         public StatisticService(ApplicationDbContext context)
         {
 
@@ -24,13 +25,15 @@ namespace PPTBoardAPI.Service
             {
                 result.Add(record.Discipline);
             }
-            return (result);
+            return result;
         }
 
         public List<DataGridRowDTO> GetGroupStatistic(int groupId, List<ControllRecord> controllRecords)
         {
             List<DataGridRowDTO> resultRows = new();
-            int specId = (int)context.Groups.Where(g => g.Id == groupId).First().SpecialityId;
+            Group group = context.Groups.Where(g => g.Id == groupId).First();
+            if (group.SpecialityId == null) return resultRows;
+            int specId = (int)group.SpecialityId;
             var dsiciplines = GetDisciplineListBySpecId(specId).Result;
             foreach (var dsicipline in dsiciplines)
             {
@@ -42,7 +45,6 @@ namespace PPTBoardAPI.Service
                 };
                 resultRows.Add(dataGridRow);
             }
-            //dataGridRow.DataGridCells = controllRecords.GroupBy(cr => cr.Value).Select(g => new DataGridCellDTO { Id = g.Key, Value = g.Count().ToString() }).ToList();
             return resultRows;
         }
 
