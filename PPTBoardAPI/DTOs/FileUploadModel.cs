@@ -2,6 +2,7 @@
 {
     public class FileUploadModel
     {
-        public IFormFile file { get; set; }
+        public IFormFile File { get; set; }
+        public int? ParentFolderID { get; set; }
     }
 }

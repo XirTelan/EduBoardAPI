@@ -24,29 +24,46 @@ namespace PPTBoardAPI.Controllers
             this.mapper = mapper;
         }
         [HttpPost("upload")]
-        public async Task<IActionResult> UploadFile(FileUploadModel fileModel)
+        public async Task<IActionResult> UploadFile([FromForm] FileUploadModel fileModel)
         {
             string path = fileShareService.GetRootFolder();
 
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
 
-            FileInfo fileInfo = new(fileModel.file.FileName);
-            string fileName = fileModel.file.Name + fileInfo.Extension;
-            string fileNameWithPath = Path.Combine(path, fileName);
+            FileInfo fileInfo = new(fileShareService.MakeValidFileName(fileModel.File.FileName));
 
-            using (var stream = new FileStream(fileNameWithPath, FileMode.Create))
+            if (!fileShareService.IsValidFileType(fileInfo.Extension)) return BadRequest("Invalid File Type");
+            string parentPath = String.Empty;
+            if (fileModel.ParentFolderID != null)
+                parentPath = GetFullFilePath((int)fileModel.ParentFolderID);
+
+            string fullFilePath = Path.Combine(path, parentPath, fileInfo.Name);
+            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fullFilePath);
+            if (System.IO.File.Exists(fullFilePath))
+                return BadRequest("Already exist");
+
+            using (var stream = new FileStream(fullFilePath, FileMode.Create))
             {
-                fileModel.file.CopyTo(stream);
+                fileModel.File.CopyTo(stream);
             }
-            fileModel.fileInformation.SystemName = fileName;
-            context.FileSystemObjs.Add(mapper.Map<FileSystemObj>(fileModel.fileInformation));
+            context.FileSystemObjs.Add(mapper.Map<FileSystemObj>(new FileSystemObjCreationDTO { DisplayName = fileNameWithoutExtension, IsFolder = false, SystemName = fileInfo.Name, ParentFolderId = fileModel.ParentFolderID }));
             await context.SaveChangesAsync();
-            return NoContent();
+            return Ok();
         }
         private string GetFullFilePath(int id)
         {
-            return ''
+            string path = BuildPath(id);
+            return path;
+        }
+        private string BuildPath(int id)
+        {
+            var fileSystemObj = context.FileSystemObjs.Where(fs => fs.Id == id).FirstOrDefault();
+            if (fileSystemObj == null) return String.Empty;
+            string path = fileSystemObj.SystemName + "\\";
+            if (fileSystemObj.ParentFolderId != null)
+                path = BuildPath((int)fileSystemObj.ParentFolderId) + path;
+            return path;
         }
         [HttpGet("download/{id:int}")]
         public async Task<IActionResult> GetFile(int id)
@@ -65,26 +82,32 @@ namespace PPTBoardAPI.Controllers
         [HttpGet]
         public async Task<List<FileSystemObjView>> GetDirList()
         {
-            var fileSystemObjs = await context.FileSystemObjs.Where(fs => fs.ParentFolder == null).ToListAsync();
+            var fileSystemObjs = await context.FileSystemObjs.Where(fs => fs.ParentFolder == null).OrderBy(fs => !fs.IsFolder).ThenBy(fs => fs.DisplayName).ToListAsync();
+            return mapper.Map<List<FileSystemObjView>>(fileSystemObjs);
+        }
+        [HttpGet("{id:int}")]
+        public async Task<List<FileSystemObjView>> GetDirList(int id)
+        {
+            var fileSystemObjs = await context.FileSystemObjs.Where(fs => fs.ParentFolderId == id).OrderBy(fs => !fs.IsFolder).ThenBy(fs => fs.DisplayName).ToListAsync();
             return mapper.Map<List<FileSystemObjView>>(fileSystemObjs);
         }
         [HttpPost]
-        public async Task<IActionResult> CreateDirectory(FileSystemObjCreationDTO fileSystemObjCreationDTO)
+        public async Task<IActionResult> CreateDirectory([FromBody] FileSystemObjCreationDTO fileSystemObjCreationDTO)
         {
-            string fullPath = Path.Combine(fileShareService.GetRootFolder(), fileSystemObjCreationDTO.DisplayName);
+            if (String.IsNullOrWhiteSpace(fileSystemObjCreationDTO.DisplayName)) return BadRequest();
+            string sanitizedFileName = fileShareService.MakeValidFileName(fileSystemObjCreationDTO.DisplayName);
+
+            string parentPath = String.Empty;
+            if (fileSystemObjCreationDTO.ParentFolderId != null)
+                parentPath = GetFullFilePath((int)fileSystemObjCreationDTO.ParentFolderId);
+
+            string fullPath = Path.Combine(fileShareService.GetRootFolder(), parentPath, sanitizedFileName);
             Directory.CreateDirectory(fullPath);
-            fileSystemObjCreationDTO.SystemName = fileSystemObjCreationDTO.DisplayName;
+            fileSystemObjCreationDTO.SystemName = sanitizedFileName;
+            fileSystemObjCreationDTO.IsFolder = true;
             context.FileSystemObjs.Add(mapper.Map<FileSystemObj>(fileSystemObjCreationDTO));
             await context.SaveChangesAsync();
             return NoContent();
         }
-
-        [HttpGet("{id:int}")]
-        public async Task<List<FileSystemObjView>> GetDirList(int id)
-        {
-            var fileSystemObjs = await context.FileSystemObjs.Where(fs => fs.ParentFolderId == id).ToListAsync();
-            return mapper.Map<List<FileSystemObjView>>(fileSystemObjs);
-        }
-
     }
 }
