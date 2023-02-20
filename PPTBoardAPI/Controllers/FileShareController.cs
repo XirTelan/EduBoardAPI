@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +13,7 @@ namespace PPTBoardAPI.Controllers
 {
     [ApiController]
     [Route("api/files")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class FileShareController : ControllerBase
     {
         private readonly FileShareService fileShareService;
@@ -60,7 +63,8 @@ namespace PPTBoardAPI.Controllers
         {
             var fileSystemObj = context.FileSystemObjs.Where(fs => fs.Id == id).FirstOrDefault();
             if (fileSystemObj == null) return String.Empty;
-            string path = fileSystemObj.SystemName + "\\";
+
+            string path = fileSystemObj.IsFolder ? fileSystemObj.SystemName + "\\" : fileSystemObj.SystemName;
             if (fileSystemObj.ParentFolderId != null)
                 path = BuildPath((int)fileSystemObj.ParentFolderId) + path;
             return path;
@@ -68,15 +72,17 @@ namespace PPTBoardAPI.Controllers
         [HttpGet("download/{id:int}")]
         public async Task<IActionResult> GetFile(int id)
         {
-            var filePath = Path.Combine(fileShareService.GetRootFolder(), "files/");
+            var fileSystemObj = context.FileSystemObjs.Where(fs => fs.Id == id).FirstOrDefault();
+            if (fileSystemObj == null) return BadRequest();
+            var filePath = Path.Combine(fileShareService.GetRootFolder(), GetFullFilePath(id));
             var provider = new FileExtensionContentTypeProvider();
             if (!provider.TryGetContentType(filePath, out var contentType))
             {
                 contentType = "application/octet-stream";
             }
 
-            var bytes = await System.IO.File.ReadAllBytesAsync(filePath);
-            return File(bytes, contentType, Path.GetFileName(filePath));
+            var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return File(stream, "application/octet-stream", fileSystemObj.DisplayName);
         }
 
         [HttpGet]
@@ -106,6 +112,16 @@ namespace PPTBoardAPI.Controllers
             fileSystemObjCreationDTO.SystemName = sanitizedFileName;
             fileSystemObjCreationDTO.IsFolder = true;
             context.FileSystemObjs.Add(mapper.Map<FileSystemObj>(fileSystemObjCreationDTO));
+            await context.SaveChangesAsync();
+            return NoContent();
+        }
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> DeleteFileSystemObject(int id)
+        {
+            var fileSystemObj = await context.FileSystemObjs.Where(fs => fs.Id == id).FirstOrDefaultAsync();
+            if (fileSystemObj == null)
+                return NotFound();
+            context.FileSystemObjs.Remove(fileSystemObj);
             await context.SaveChangesAsync();
             return NoContent();
         }

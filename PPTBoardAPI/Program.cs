@@ -13,6 +13,15 @@ ConfigurationManager configuration = builder.Configuration;
 
 // Add services to the container.
 
+builder.Services.AddCors((options) =>
+{
+    var frontendUrl = builder.Configuration.GetSection("FrontendURL").Get<List<string>>().ToArray();
+    options.AddDefaultPolicy(builder =>
+    {
+        builder.SetIsOriginAllowedToAllowWildcardSubdomains().WithOrigins(frontendUrl).AllowAnyHeader().AllowAnyMethod().AllowCredentials().WithExposedHeaders(new string[] { "totalAmountOfRecords" });
+
+    });
+});
 builder.Services.AddControllers().AddNewtonsoftJson(
           options =>
           {
@@ -58,16 +67,7 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDbContext>(optins => optins.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddCors((options) =>
-{
 
-    var frontendUrl = builder.Configuration.GetSection("FrontendURL").Get<List<string>>().ToArray();
-    options.AddDefaultPolicy(builder =>
-    {
-        builder.WithOrigins(frontendUrl).AllowAnyHeader().AllowAnyMethod().AllowCredentials().WithExposedHeaders(new string[] { "totalAmountOfRecords" });
-
-    });
-});
 builder.Services.AddAutoMapper(typeof(Program));
 
 var app = builder.Build();
@@ -80,11 +80,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors();
 app.UseAuthentication();
-
+app.UseCors();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

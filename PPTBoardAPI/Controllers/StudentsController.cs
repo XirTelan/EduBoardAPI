@@ -75,7 +75,12 @@ namespace PPTBoardAPI.Controllers
             foreach (StudentsExcelCreationDTO creationDTO in studentsExcelCreationDTOs)
             {
                 int groupId = context.Groups.Where(g => g.Name.ToUpper() == creationDTO.GroupName.ToUpper()).Select(g => g.Id).FirstOrDefault();
-                if (groupId == 0) return BadRequest("Group not found");
+                if (groupId == 0)
+                {
+                    context.Groups.Add(new Group { Name = creationDTO.GroupName });
+                    await context.SaveChangesAsync();
+                    groupId = context.Groups.Where(g => g.Name.ToUpper() == creationDTO.GroupName.ToUpper()).Select(g => g.Id).FirstOrDefault();
+                }
                 Student student = new()
                 {
                     FirstName = creationDTO.FirstName,
