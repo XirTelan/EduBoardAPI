@@ -121,8 +121,14 @@ namespace PPTBoardAPI.Controllers
             var fileSystemObj = await context.FileSystemObjs.Where(fs => fs.Id == id).FirstOrDefaultAsync();
             if (fileSystemObj == null)
                 return NotFound();
+            string filePath = Path.Combine(fileShareService.GetRootFolder(), GetFullFilePath(fileSystemObj.Id));
+
+
             context.FileSystemObjs.Remove(fileSystemObj);
             await context.SaveChangesAsync();
+            if (fileSystemObj.IsFolder) Directory.Delete(filePath, true);
+            else System.IO.File.Delete(filePath);
+
             return NoContent();
         }
     }
