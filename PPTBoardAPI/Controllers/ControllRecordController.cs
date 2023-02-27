@@ -73,24 +73,49 @@ namespace PPTBoardAPI.Controllers
 
             foreach (ControllRecordCreationDTO crDTO in controllRecordCreationDTOs)
             {
-                var controllRecord = await context.ControllRecords.Where(a => a.StudentId == crDTO.StudentId && a.Year == crDTO.Year && a.Month == crDTO.Month && a.DisciplineId == crDTO.DisciplineId).FirstOrDefaultAsync();
-                if (controllRecord == null)
-                {
-                    context.ControllRecords.Add(mapper.Map<ControllRecord>(crDTO));
-                    await context.SaveChangesAsync();
-                }
-                else if (crDTO.Value == "")
-                {
-                    context.ControllRecords.Remove(controllRecord);
-                    await context.SaveChangesAsync();
-                }
-                else
-                {
-                    if (crDTO.Value == controllRecord.Value) continue;
+                await HandleRecord(crDTO);
+            }
+            return NoContent();
+        }
+
+        private async Task<ActionResult> HandleRecord(ControllRecordCreationDTO crDTO)
+        {
+            var controllRecord = await context.ControllRecords.Where(a => a.StudentId == crDTO.StudentId && a.Year == crDTO.Year && a.Month == crDTO.Month && a.DisciplineId == crDTO.DisciplineId).FirstOrDefaultAsync();
+            if (controllRecord == null)
+            {
+                context.ControllRecords.Add(mapper.Map<ControllRecord>(crDTO));
+            }
+            else if (crDTO.Value == "")
+            {
+                context.ControllRecords.Remove(controllRecord);
+            }
+            else
+            {
+                if (crDTO.Value != controllRecord.Value)
                     controllRecord = mapper.Map(crDTO, controllRecord);
-                    await context.SaveChangesAsync();
+            }
+            await context.SaveChangesAsync();
+            return NoContent();
+        }
+        [HttpPost("import")]
+        public async Task<ActionResult> ImportFromExcel([FromBody] ControllRecordImportDTO controllRecordImportDTOs)
+        {
+            foreach (StudentRecord studentRecord in controllRecordImportDTOs.StudentRecords)
+            {
+                if (studentRecord.Records.Count == 0) continue;
+                string[] fio = studentRecord.FullName.Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries);
+
+                int studentId = await context.Students.Where(s => s.SecondName == fio[0] && s.FirstName == fio[1]).Select(s => s.Id).FirstOrDefaultAsync();
+                if (studentId == 0) continue;
+                foreach (GradeRecord gradeRecord in studentRecord.Records)
+                {
+                    int disciplineId = await context.Disciplines.Where(d => gradeRecord.DisciplineName == d.Name).Select(d => d.Id).FirstOrDefaultAsync();
+                    if (disciplineId == 0) continue;
+                    ControllRecordCreationDTO controllRecord = new ControllRecordCreationDTO { StudentId = studentId, ControllTypeId = controllRecordImportDTOs.ControllTypeId, DisciplineId = disciplineId, Month = controllRecordImportDTOs.Month, Year = controllRecordImportDTOs.Year, Value = gradeRecord.Grade };
+                    await HandleRecord(controllRecord);
                 }
             }
+
             return NoContent();
         }
     }

@@ -10,5 +10,6 @@ namespace PPTBoardAPI.Authentication
         public string Password { get; set; }
         [Required]
         public string Fio { get; set; }
+        public List<string>? Roles { get; set; }
     }
 }
