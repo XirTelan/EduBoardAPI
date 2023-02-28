@@ -78,6 +78,7 @@ namespace PPTBoardAPI.Controllers
             return NoContent();
         }
 
+
         private async Task<ActionResult> HandleRecord(ControllRecordCreationDTO crDTO)
         {
             var controllRecord = await context.ControllRecords.Where(a => a.StudentId == crDTO.StudentId && a.Year == crDTO.Year && a.Month == crDTO.Month && a.DisciplineId == crDTO.DisciplineId).FirstOrDefaultAsync();
@@ -100,6 +101,12 @@ namespace PPTBoardAPI.Controllers
         [HttpPost("import")]
         public async Task<ActionResult> ImportFromExcel([FromBody] ControllRecordImportDTO controllRecordImportDTOs)
         {
+            bool isInRole = User.IsInRole("Admin");
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var personId = context.Groups.Where(g => g.Id == controllRecordImportDTOs.GroupId).FirstOrDefaultAsync().Result?.PersonId;
+            bool isCurator = personId == userId;
+            if (!isInRole && !isCurator) return StatusCode(StatusCodes.Status400BadRequest, new Response { Status = "Error", Message = "Нет прав" });
+
             foreach (StudentRecord studentRecord in controllRecordImportDTOs.StudentRecords)
             {
                 if (studentRecord.Records.Count == 0) continue;

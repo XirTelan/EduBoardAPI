@@ -30,7 +30,6 @@ namespace PPTBoardAPI.Controllers
             await HttpContext.InsertParametersPaginationInHeader(queryable);
             var groups = await queryable.OrderBy(x => x.Name).Paginate(paginationDTO).ToListAsync();
             return mapper.Map<List<GroupDTO>>(groups);
-
         }
         [HttpGet("getindexlist")]
         public async Task<ActionResult<List<GroupIndexDTO>>> GetIndexList()

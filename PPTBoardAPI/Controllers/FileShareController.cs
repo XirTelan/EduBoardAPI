@@ -98,6 +98,7 @@ namespace PPTBoardAPI.Controllers
             return mapper.Map<List<FileSystemObjView>>(fileSystemObjs);
         }
         [HttpPost]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<IActionResult> CreateDirectory([FromBody] FileSystemObjCreationDTO fileSystemObjCreationDTO)
         {
             if (String.IsNullOrWhiteSpace(fileSystemObjCreationDTO.DisplayName)) return BadRequest();
@@ -116,6 +117,7 @@ namespace PPTBoardAPI.Controllers
             return NoContent();
         }
         [HttpDelete("{id:int}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<IActionResult> DeleteFileSystemObject(int id)
         {
             var fileSystemObj = await context.FileSystemObjs.Where(fs => fs.Id == id).FirstOrDefaultAsync();

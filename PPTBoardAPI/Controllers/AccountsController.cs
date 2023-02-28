@@ -70,6 +70,8 @@ namespace PPTBoardAPI.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+
         public async Task<ActionResult<UserDTO>> GetUser(string id)
         {
             var user = await userManager.FindByIdAsync(id);
@@ -81,6 +83,7 @@ namespace PPTBoardAPI.Controllers
             return new UserDTO { Id = user.Id, UserName = user.UserName, Fio = user.Fio, Roles = userRolesList };
         }
         [HttpPut("{id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<ActionResult<UserDTO>> EditUser(string id, [FromBody] UserRegisterCredentials userRegisterCredentials)
         {
             var user = await userManager.FindByIdAsync(id);
@@ -107,6 +110,7 @@ namespace PPTBoardAPI.Controllers
 
         [HttpPost]
         [Route("register")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
         public async Task<IActionResult> Register([FromBody] UserRegisterCredentials model)
         {
             var userExists = await userManager.FindByNameAsync(model.UserName);

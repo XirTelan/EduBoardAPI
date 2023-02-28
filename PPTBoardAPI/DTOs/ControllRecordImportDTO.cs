@@ -3,6 +3,7 @@
     public class ControllRecordImportDTO
     {
         public int ControllTypeId { get; set; }
+        public int GroupId { get; set; }
         public List<StudentRecord> StudentRecords { get; set; }
         public int Month { get; set; }
         public int Year { get; set; }
