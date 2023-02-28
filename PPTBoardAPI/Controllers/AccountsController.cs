@@ -99,11 +99,17 @@ namespace PPTBoardAPI.Controllers
 
         [HttpPost("role")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "IsAdmin")]
-        public async Task<ActionResult> ChangeRole([FromBody] UserRoleDTO userRoleDTO)
+        public async Task<ActionResult> AddRoleToUser([FromBody] UserRoleDTO userRoleDTO)
         {
             var user = await userManager.FindByIdAsync(userRoleDTO.UserId);
-            await RemoveRolesFromUser(user);
-            await AddRolesToUser(user, new List<string> { userRoleDTO.Role });
+            if (userRoleDTO.isDeleteFlag)
+            {
+                await userManager.RemoveFromRoleAsync(user, userRoleDTO.Role);
+            }
+            else
+            {
+                await AddRolesToUser(user, new List<string> { userRoleDTO.Role });
+            }
             return NoContent();
         }
 
@@ -147,10 +153,7 @@ namespace PPTBoardAPI.Controllers
                 if (!await roleManager.RoleExistsAsync(role))
                     await roleManager.CreateAsync(new IdentityRole(role));
 
-                if (await roleManager.RoleExistsAsync(role))
-                {
-                    await userManager.AddToRoleAsync(user, role);
-                }
+                await userManager.AddToRoleAsync(user, role);
             }
         }
         async private Task RemoveRolesFromUser(Person user)
