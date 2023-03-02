@@ -79,14 +79,14 @@ namespace PPTBoardAPI.Controllers
         }
 
 
-        private async Task<ActionResult> HandleRecord(ControllRecordCreationDTO crDTO)
+        private async Task<ActionResult> HandleRecord(ControllRecordCreationDTO crDTO, bool isDeleteAllow = true)
         {
             var controllRecord = await context.ControllRecords.Where(a => a.StudentId == crDTO.StudentId && a.Year == crDTO.Year && a.Month == crDTO.Month && a.DisciplineId == crDTO.DisciplineId).FirstOrDefaultAsync();
             if (controllRecord == null)
             {
                 context.ControllRecords.Add(mapper.Map<ControllRecord>(crDTO));
             }
-            else if (crDTO.Value == "")
+            else if (crDTO.Value == "" && isDeleteAllow)
             {
                 context.ControllRecords.Remove(controllRecord);
             }
@@ -119,7 +119,7 @@ namespace PPTBoardAPI.Controllers
                     int disciplineId = await context.Disciplines.Where(d => gradeRecord.DisciplineName == d.Name).Select(d => d.Id).FirstOrDefaultAsync();
                     if (disciplineId == 0) continue;
                     ControllRecordCreationDTO controllRecord = new ControllRecordCreationDTO { StudentId = studentId, ControllTypeId = controllRecordImportDTOs.ControllTypeId, DisciplineId = disciplineId, Month = controllRecordImportDTOs.Month, Year = controllRecordImportDTOs.Year, Value = gradeRecord.Grade };
-                    await HandleRecord(controllRecord);
+                    await HandleRecord(controllRecord, false);
                 }
             }
 

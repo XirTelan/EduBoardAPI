@@ -138,7 +138,9 @@ namespace PPTBoardAPI.Controllers
                         messageError += error.Description + Environment.NewLine;
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = messageError });
             }
-            List<string> roles = model.Roles;
+            List<string> roles = new();
+            if (model.Roles != null)
+                roles.AddRange(model.Roles);
             roles.Add(UserRoles.User);
             await AddRolesToUser(user, roles);
             return Ok(new Response { Status = "Success", Message = "User created successfully!" });
